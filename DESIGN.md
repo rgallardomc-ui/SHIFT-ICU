@@ -1,6 +1,6 @@
 # SHIFT: ICU
 
-Created by Rafael Gallardo, RN. First playable build: 0.1.
+Created by Rafael Gallardo, RN. First playable build: 0.1. Current build: 0.2.
 
 ## The game Rafael described
 
@@ -10,14 +10,16 @@ The core loop is receive report, assess, interpret, act within orders, reassess,
 
 ## This build
 
-Four pods on the hospital map. Six playable cases:
+Four pods on the hospital map. Eight playable cases:
 
 1. Delta D1: Impella CP suction with reduced filling after diuresis.
 2. Delta D2: Impella CP suction with rising CVP and RV dysfunction.
 3. Delta D3: Impella 5.5 too shallow / position in aorta.
 4. Delta D4: Impella 5.5 too deep / position in ventricle.
-5. Bravo B1: sepsis, perfusion, fluid math and treatment in parallel.
-6. Bravo B2: DKA, potassium before insulin, then dextrose with ongoing ketoacidosis.
+5. Delta D5: new dark urine, laboratory trends, suspected hemolysis and operator treatment.
+6. Delta D6: purge-disc recognition failure, escalation and a trained backup-controller exchange.
+7. Bravo B1: sepsis, perfusion, fluid math and treatment in parallel.
+8. Bravo B2: DKA, potassium before insulin, then dextrose with ongoing ketoacidosis.
 
 Each case has handoff, revealed assessment findings, active/conditional/clarification orders, laboratory schedules, nursing actions, explicit scope boundaries, a scripted response, SBAR and response fields, optional browser speech input, an exportable practice note, and a debrief. Review notes can be exported for a manager or educator. They are not sent automatically.
 
@@ -45,7 +47,9 @@ Baseline exam and sedation confounders, new stroke deficits and last known well,
 
 ### Delta / Cardiac
 
-Additional Impella modules: purge problems, hemolysis, CP/5.5/RP selection, weaning, arrest and device troubleshooting. CABG: bleeding, falling output, suspected tamponade, rhythm problems, graft perfusion concerns and escalation. ECMO: VA versus VV support, oxygen delivery, drainage problems, bleeding/anticoagulation, cannula assessment and specialist escalation. ECMO controls and adjustments should reflect the player’s reviewed role and institution’s permissions.
+Version 0.2 adds hemolysis and purge-disc recognition failure before expanding other pods. Working-concern choices require the relevant findings but never gate urgent notification. Responses stay in the case and action timeline. Initial assessment cards explicitly retain the starting findings. Estimated LV values/waveforms are suppressed at P3 and below; the recorded alarm-onset interpretation remains separately available.
+
+Additional Impella modules: further purge failure variants, CP/5.5/RP selection, weaning, arrest and device troubleshooting. CABG: bleeding, falling output, suspected tamponade, rhythm problems, graft perfusion concerns and escalation. ECMO: VA versus VV support, oxygen delivery, drainage problems, bleeding/anticoagulation, cannula assessment and specialist escalation. ECMO controls and adjustments should reflect the player’s reviewed role and institution’s permissions.
 
 ## Level design standard
 

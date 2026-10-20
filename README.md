@@ -9,15 +9,24 @@ Explore four hospital pods and practice a compressed shift: receive report, asse
 | Alpha | Intermediate care | Curriculum planned |
 | Bravo | Medical ICU | Sepsis and DKA cases playable |
 | Charlie | Neuro ICU | Curriculum planned |
-| Delta | Cardiac ICU | Four Impella cases playable |
+| Delta | Cardiac ICU | Six Impella cases playable |
+
+## Live game and source
+
+Play **[SHIFT: ICU](https://rgallardomc-ui.github.io/SHIFT-ICU/)**.
+
+The source of truth is **[rgallardomc-ui/SHIFT-ICU](https://github.com/rgallardomc-ui/SHIFT-ICU)** on `main`. Deployments remain manual through the included Pages workflow. The hosted version can lag a newer source commit until that workflow succeeds.
 
 ## Current features
 
 - Retro hospital map with tap, keyboard and touch controls.
-- Six case pathways with bedside findings, orders and laboratory schedules.
+- Eight case pathways with bedside findings, orders and laboratory schedules.
 - Schematic Impella Ao/LV placement pressures and motor current.
 - PAPi and fluid calculations; albumin concentration/volume calculator.
 - Coached and independent modes, safety stops and a case debrief.
+- New Delta hemolysis and purge-disc recognition cases with working-concern choices.
+- Persistent action responses, visible task reminders and larger touch controls.
+- Device estimates disabled below P4, with a three-signal explanation and source links.
 - Typed SBAR, optional browser dictation, practice-note export and local progress.
 - Exportable clinical/gameplay review notes.
 
@@ -42,7 +51,7 @@ npm test
 node --check dist/app.js
 ```
 
-Twenty scenario-engine checks cover complete handoffs, unsafe actions, potassium before insulin, position-alarm support settings, PAPi, fluid calculations and albumin arithmetic. Live browser and clinical review remain separate checks.
+Thirty-four automated checks cover complete handoffs, unsafe actions, potassium before insulin, position-alarm support settings, PAPi, fluid calculations and albumin arithmetic. Live browser and clinical review remain separate checks. See [CLINICAL_REVIEW.md](CLINICAL_REVIEW.md) for source scope, case assumptions, and outstanding review.
 
 ## GitHub Pages
 
