@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#101e29"><title>SHIFT: ICU — A nursing adventure</title><meta name="description" content="A retro ICU nursing simulation by Rafael Gallardo, RN. Assess, interpret, act, reassess, and hand off across four clinical pods."><link rel="icon" type="image/svg+xml" href="icon.svg"><link rel="stylesheet" href="style.css"></head>
+<body>
+ <header class="topbar"><a class="brand" href="#" aria-label="SHIFT ICU home"><span class="brand-icon" aria-hidden="true">✚</span><span>SHIFT<span class="brand-colon">:</span>ICU<small>A NURSING ADVENTURE</small></span></a><nav aria-label="Game navigation"><button data-do="hub" class="quiet">Hospital map</button><button data-do="guide" class="quiet">Pocket guide</button><button data-do="sound" class="iconbtn" id="soundBtn" aria-label="Enable game sound" aria-pressed="false">♫ <span>OFF</span></button></nav></header>
+ <main id="app"></main>
+ <footer class="sitefooter"><span>Created by Rafael Gallardo, RN</span><span>v0.1 · Educational prototype · Fictional patients</span><button data-do="about">Build & review notes</button></footer>
+ <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+ <dialog id="modal"><button class="modal-close" data-do="close" aria-label="Close dialog">×</button><div id="modalBody"></div></dialog>
+ <script type="module" src="app.js"></script>
+</body></html>
