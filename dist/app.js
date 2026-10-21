@@ -1,4 +1,4 @@
-import {createShiftGame} from './shift-floor.js';
+import {createShiftGame} from './shift-floor.js?v=0.3.1';
 import {PODS,CASES,CASE_BY_ID} from './cases.js';
 import {deviceDisplay} from './device.js';
 import {CLINICAL_SOURCES} from './sources.js';
