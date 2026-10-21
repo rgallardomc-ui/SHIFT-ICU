@@ -111,3 +111,27 @@ Clinical educator / manager / specialty review and actual phone / desktop browse
 QA remain separate from the automated scenario checks. Source checking does not
 fill a reviewer approval field. The offered SLED photograph, machine IFU and local
 scope / charting examples are still needed before a facility-specific version.
+
+## Arcade workflow additions — 0.4
+
+Source checks on October 20, 2026 retain the unvalidated-prototype status. The new
+puzzles are abstractions and do not constitute procedural or medication competence.
+
+| Source inspected | Applied scope |
+| --- | --- |
+| [SHM vascular-access position statement (2019)](https://pmc.ncbi.nlm.nih.gov/articles/PMC10193861/) | Target identification, real-time needle-tip visualization, structured simulation / supervised training. The phantom uses schematic shapes rather than diagnostic ultrasound images. |
+| [Edwards VolumeView / TruWave components IFU, DOC-0259128A](https://eifu.edwards.com/eifu/5970f1b346e0fb00015e5f4d/DOC-0259128A.pdf), English sections 10.2–10.3 | Prime away from the patient, remove air, use the prescribed pressure configuration and reference level / zero. The arcade case uses 300 mmHg for this setup. It does not authorize insertion or reproduce a complete monitor / catheter procedure. |
+| [Abiomed heparin-free purge education](https://www.heartrecovery.com/en-us/education/heparin-free-purge) and [SCAI CCU Impella anticoagulation guidance (2022)](https://www.scai.org/quality-improvement-tools/qi-tips/impella-anticoagulation-management-ccu) | The side quest explicitly adds confirmed heparin contraindication and a device-team prescription: bicarbonate 25 mEq/L in D5W, total 500 mL / 12.5 mEq. Pharmacy prepares; the nurse matches patient name / fictional MRN, concentration, volume and purge route; the trained device team handles connection. No automatic purge or systemic-anticoagulation change is performed. |
+
+The dislodged-PIV branch explicitly preserves dedicated critical-infusion access.
+The player assesses the patient, bleeding and remaining access before a supplies
+run. Its active ticket requires ordered labs and replacement peripheral access;
+labs-first does not silently complete the replacement task. A dressing / patency
+puzzle is not a complete venipuncture, infiltration or emergency access algorithm.
+
+Celsius is an arcade sprint pickup, not caffeine dosing advice. Boosts change only
+movement. Quest points are never presented as clinical accuracy or competency.
+Reassessment still waits for the displayed case interval; immediate recovery or
+laboratory normalization is not invented. Admission ETAs never override receiving
+readiness. Local educator, device-team, medication and actual-phone review remain
+pending; source checks do not establish their approval.

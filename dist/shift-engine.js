@@ -1,4 +1,4 @@
-import {FLOOR_PODS, SHIFT_LEVELS, SHIFT_PATIENTS, PATIENT_BY_ID, ADMISSIONS, PROCEDURES, NOTE_FIELDS} from './shift-data.js';
+import {FLOOR_PODS, SHIFT_LEVELS, SHIFT_PATIENTS, PATIENT_BY_ID, ADMISSIONS, PROCEDURES, NOTE_FIELDS} from './shift-data.js?v=0.4.0';
 
 export const SHIFT_VERSION = 3;
 export const SIM_MINUTES_PER_SECOND = 0.5;
@@ -418,6 +418,7 @@ export function exportShift(shift) {
     `${FLOOR_PODS[shift.pod].name} · seed ${shift.seed} · ${clockAt(shift.elapsed)} · ${shift.ended ? 'ended' : 'in progress'}`,
     'Scripted learning simulation. Notes are checked for completeness only; no clinical validation or competency certification.',
     ...shift.patients.map(p => `\nROOM ${p.room} · ${profileOf(p).label}\n${NOTE_FIELDS.map(([id, label]) => `${label}\n${p.note[id]}`).join('\n\n')}\n\nRECORDED FLOWSHEET\n${p.flowsheet.map(o => `${clockAt(o.at)} (charted ${clockAt(o.chartedAt)}): ${o.kind}\n${o.text}`).join('\n')}\nUncharted obtained observations: ${p.observations.length}`),
+    ...(shift.arcade ? [`\nARCADE QUEST POINTS: ${shift.arcade.score} · ${shift.arcade.done.length} objectives. Game score, not a clinical competency grade.`] : []),
     '\nGAME EVENT TIMELINE',
     ...shift.log.map(e => `${e.time}${e.room ? ` · R${e.room}` : ''} · ${e.text}`),
     '\nPENDING CARE', ...openTasks(shift).map(t => `R${t.room} · ${t.title} · due ${clockAt(t.due)}`)

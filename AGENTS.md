@@ -53,3 +53,18 @@ Keep it separate from `rgallardomc-ui/Entropy-Game`, which is a visual reference
   resuscitation, airway, GI / endoscopic and diagnostic plan.
 - The chart follows a generic Expanse-style workflow. It is not connected to an EHR,
   an authenticated hospital environment or a facility medication formulary.
+
+## Arcade interaction layer
+
+- The default UI is a guided, play-first shift. Keep one next objective prominent;
+  use short clue cards and visible results. The detailed clinical chart is optional.
+- Preserve `shift.arcade` and the existing version-3 save / notes. Pure arcade state
+  lives in `dist/shift-arcade.js`; do not award repeat points or create inventory
+  without a completed, appropriate task.
+- Keep the U-shaped station central and supply / Pyxis behind it. Wall geometry,
+  routes and line-of-sight interaction must agree with the drawing.
+- The ultrasound IV is an abstract phantom, not a procedural credential. A-line
+  preparation does not perform catheter insertion. Pharmacy pickup does not
+  administer a drug or independently change purge / systemic anticoagulation.
+- Three Celsius charges are fictional movement boosts. They never change clinical
+  timers, patient physiology or medication authority. Humor targets unit logistics.

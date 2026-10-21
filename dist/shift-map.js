@@ -1,4 +1,4 @@
-import {FLOOR_PODS, PATIENT_BY_ID} from './shift-data.js';
+import {FLOOR_PODS, PATIENT_BY_ID} from './shift-data.js?v=0.4.0';
 
 export const WORLD = {width: 1440, height: 900};
 const CELL = 20;
@@ -11,7 +11,14 @@ export function roomGeometry(number) {
     door: {x: x + 110, y: i < 6 ? y + 240 : y - 20}};
 }
 function barriers() {
-  const result = [{x: 470, y: 365, w: 500, h: 140}, {x: 60, y: 350, w: 150, h: 30}, {x: 60, y: 480, w: 150, h: 30}];
+  const result = [
+    // U-shaped nursing station, open toward the lower rooms.
+    {x:470,y:440,w:500,h:30},{x:470,y:440,w:30,h:125},{x:940,y:440,w:30,h:125},
+    // Supply room behind the station. Its door faces the short rear corridor.
+    {x:470,y:290,w:500,h:8},{x:470,y:290,w:8,h:105},{x:962,y:290,w:8,h:105},
+    {x:470,y:387,w:220,h:8},{x:750,y:387,w:220,h:8},
+    {x:500,y:310,w:150,h:25},{x:760,y:310,w:175,h:25}
+  ];
   for (let room = 1; room <= 12; room++) {
     const r = roomGeometry(room), doorY = r.top ? r.y + 212 : r.y;
     result.push({x: r.x, y: r.y, w: 8, h: 220}, {x: r.x + 212, y: r.y, w: 8, h: 220});
@@ -60,18 +67,19 @@ export function routeBetween(start, goal) {
   for (let at = to; at !== null; at = previous.get(at)) route.push({x: at % COLS * CELL + 10, y: Math.floor(at / COLS) * CELL + 10});
   return route.reverse();
 }
-export function moveNurse(player, dx, dy, seconds) {
+export function moveNurse(player, dx, dy, seconds, speed = 1) {
   const dt = Math.max(0, Math.min(Number(seconds) || 0, 0.05));
-  const length = Math.hypot(dx, dy) || 1, distance = 235 * dt;
+  const length = Math.hypot(dx, dy) || 1, distance = 235 * dt * Math.max(1,Math.min(Number(speed)||1,2));
   const nx = player.x + dx / length * distance, ny = player.y + dy / length * distance;
   if (walkAllowed(nx, player.y)) player.x = nx;
   if (walkAllowed(player.x, ny)) player.y = ny;
 }
 export function interactionTargets(shift) {
   const targets = [
-    {kind: 'station', label: 'Nursing station · report / charts', x: 700, y: 540},
+    {kind: 'station', label: 'Nursing station · report / charts', x: 700, y: 525},
     {kind: 'charge', label: 'Talk to charge nurse', x: 1100, y: 420},
-    {kind: 'supply', label: 'Supply room · pack your cart', x: 235, y: 425}
+    {kind: 'supply', label: 'Supply room · fill your gray bin', x: 620, y: 360},
+    {kind: 'pyxis', label: 'Pyxis · medication / pharmacy pickup', x: 865, y: 360}
   ];
   for (const p of shift.patients) {
     const r = roomGeometry(p.room);
@@ -85,7 +93,7 @@ export function interactionTargets(shift) {
   return targets;
 }
 export function nearestTarget(shift, range = 82) {
-  return interactionTargets(shift).map(t => ({...t, distance: Math.hypot(t.x - shift.player.x, t.y - shift.player.y)})).filter(t => t.distance <= range).sort((a, b) => a.distance - b.distance)[0] || null;
+  return interactionTargets(shift).map(t => ({...t, distance: Math.hypot(t.x - shift.player.x, t.y - shift.player.y)})).filter(t => t.distance <= range && Array.from({length:12},(_,i)=>walkAllowed(shift.player.x+(t.x-shift.player.x)*i/11,shift.player.y+(t.y-shift.player.y)*i/11,2)).every(Boolean)).sort((a, b) => a.distance - b.distance)[0] || null;
 }
 
 export function drawFloor(canvas, shift, path = [], timestamp = 0) {
@@ -119,17 +127,17 @@ export function drawFloor(canvas, shift, path = [], timestamp = 0) {
   };
   rect(0, 0, WORLD.width, WORLD.height, '#263e47');
   for (let x = 0; x < WORLD.width; x += 40) for (let y = 0; y < WORLD.height; y += 40) rect(x + 1, y + 1, 38, 38, ((x + y) / 40) % 2 ? '#2d454e' : '#304951');
-  // A central island with space to walk all the way around it.
-  rect(475, 373, 500, 140, '#07172055'); rect(470, 365, 500, 140, '#597976');
-  rect(480, 374, 480, 120, '#84a5a0'); rect(492, 387, 456, 94, '#243c47');
-  for (const x of [510, 670, 830]) {rect(x, 385, 90, 49, '#63848b'); rect(x + 6, 391, 78, 36, '#10242c'); rect(x + 10, 396, 36, 3, pod.color); rect(x + 35, 437, 20, 7, '#a8bfba');}
-  label('NURSING STATION', 597, 474, 18); label('REPORT  •  CHARTS', 598, 493, 12, '#adc1c6');
-  rect(40, 326, 235, 203, '#19333e'); label('SUPPLIES', 75, 412, 22, '#e6ba70');
-  for (const y of [350, 480]) {
-    rect(60, y, 150, 30, '#6d817b');
-    for (let i = 0; i < 6; i++) {rect(66 + i * 24, y - 14, 18, 19, i % 2 ? '#c6bc8e' : '#8ab2ac'); rect(72 + i * 24, y - 9, 6, 7, '#f3f0df');}
-  }
-  label('PACK CART →', 73, 440, 14, '#adc1c6');
+  // Central U-shaped station; supplies and Pyxis sit behind its back wall.
+  rect(470,440,500,30,'#84a5a0');rect(470,440,30,125,'#84a5a0');rect(940,440,30,125,'#84a5a0');
+  rect(480,444,480,17,'#243c47');rect(477,470,17,85,'#597976');rect(946,470,17,85,'#597976');
+  for(const x of [520,675,830]){rect(x,431,82,35,'#63848b');rect(x+5,435,72,25,'#10242c');rect(x+12,441,42,3,pod.color);}
+  label('NURSING STATION',575,500,18);label('CHARGE HAS THE SHORT VERSION',560,520,11,'#adc1c6');
+  rect(470,290,500,105,'#19333e');rect(470,290,500,8,'#617b83');rect(470,290,8,105,'#617b83');rect(962,290,8,105,'#617b83');
+  rect(470,387,220,8,'#617b83');rect(750,387,220,8,'#617b83');rect(690,387,60,8,'#e6ba70');
+  label('SUPPLY ROOM',495,281,17,'#e6ba70');label('PYXIS',839,281,17,'#aaa4ee');
+  for(const x of [500,760]){rect(x,310,x===500?150:175,25,'#6d817b');for(let i=0;i<6;i++){rect(x+4+i*24,308,18,19,i%2?'#c6bc8e':'#8ab2ac');}}
+  rect(835,345,85,25,'#4e5c79');rect(840,349,75,15,'#1b2740');label('PICKUP',849,360,10,'#bfb2ff');
+  label('GRAY BINS',520,365,12,'#adc1c6');rect(600,343,32,18,'#9ca8ac');rect(604,347,24,10,'#687982');
   label('CHARGE', 1060, 379, 17, pod.color); person(1100, 420, '#76d5ba');
   rect(1180, 355, 32, 40, '#677f68'); rect(1170, 335, 52, 34, '#82a17f');
   for (let number = 1; number <= 12; number++) {
@@ -162,7 +170,13 @@ export function drawFloor(canvas, shift, path = [], timestamp = 0) {
         rect(r.x + 117, r.y + 124, 20, 3, '#76d5ba'); rect(r.x + 115, r.y + 143, 7, 6, '#e6ba70'); rect(r.x + 132, r.y + 143, 7, 6, '#ed9f86');
       }
       if (p.stage === 'changed') {rect(r.x + 182, r.y + 100, 24, 25, '#a4444d'); label('!', r.x + 189, r.y + 120, 22);}
-    } else if (incoming) label('PREPARE BED', r.x + 16, r.y + 196, 15, '#e6ba70');
+    } else if (incoming) {
+      label('PREPARE BED', r.x + 16, r.y + 196, 15, '#e6ba70');
+      const installed=shift.admission.installed;
+      if(installed.pump){rect(r.x+115,r.y+75,4,80,'#b5c8c8');rect(r.x+108,r.y+95,25,21,'#aaa4ee');}
+      if(installed.airway){rect(r.x+110,r.y+125,35,28,'#76d5ba');label('O2',r.x+115,r.y+144,12,'#17313b');}
+      const n=Object.values(installed).filter(Boolean).length;label(`${n} SETUPS READY`,r.x+17,r.y+176,12,'#e6ba70');
+    }
     else label('OTHER ASSIGNMENT', r.x + 16, r.y + 196, 11, '#899da3');
   }
   if (path.length) {
@@ -170,7 +184,13 @@ export function drawFloor(canvas, shift, path = [], timestamp = 0) {
     path.filter((_, i) => i % 2 === 0).forEach(p => ctx.fillRect(p.x - 2, p.y - 2, 4, 4));
     const goal = path.at(-1); ctx.strokeStyle = '#e6ba70'; ctx.lineWidth = 3; ctx.strokeRect(goal.x - 13, goal.y - 13, 26, 26);
   }
+  const focus=shift.arcade?.focus;
+  const target=focus&&interactionTargets(shift).find(t=>t.kind===focus.kind&&(!focus.room||t.room===focus.room));
+  if(target){ctx.strokeStyle='#ffe47d';ctx.lineWidth=3;ctx.setLineDash([8,5]);ctx.strokeRect(target.x-29,target.y-28,58,58);ctx.setLineDash([]);label('NEXT',target.x-18,target.y-36,12,'#ffe47d');}
+  if(shift.arcade?.boostLeft>0){for(let i=0;i<3;i++)rect(shift.player.x-32-i*11,shift.player.y+i*8,20,3,'#ffe47d');}
   person(shift.player.x, shift.player.y, '#aaa4ee', path.length > 0);
+  const carried=Object.values(shift.inventory).reduce((n,v)=>n+v,0);
+  if(carried){rect(shift.player.x+14,shift.player.y+9,24,15,'#a7b1b5');rect(shift.player.x+17,shift.player.y+12,18,7,'#6d7c86');label(String(carried),shift.player.x+22,shift.player.y+21,10,'#fff1c5');}
   label('YOU', shift.player.x - 9, shift.player.y - 33, 11, '#f0e3b7');
   const near = nearestTarget(shift);
   if (near) {

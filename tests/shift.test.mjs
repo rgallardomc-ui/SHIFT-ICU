@@ -299,7 +299,7 @@ test('movement follows valid routes, normalizes diagonals and cannot tunnel thro
   }
   const before={x:400,y:400},diagonal={...before};moveNurse(diagonal,1,1,0.04);
   assert.ok(Math.hypot(diagonal.x-before.x,diagonal.y-before.y)<=235*0.04+0.001);
-  const atWall={x:450,y:425};for(let i=0;i<100;i++)moveNurse(atWall,1,0,5);
+  const atWall={x:450,y:480};for(let i=0;i<100;i++)moveNurse(atWall,1,0,5);
   assert.ok(atWall.x<470-8);
   const targets=interactionTargets(createShift({seed:22}));
   assert.ok(targets.some(t=>t.kind==='supply')&&targets.some(t=>t.kind==='computer'));
