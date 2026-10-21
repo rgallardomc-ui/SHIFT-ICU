@@ -127,3 +127,23 @@ course of every complication. Later work should add reviewed evolving states,
 procedure / medication detail and alternative care paths before claiming a full
 specialty curriculum. Real phone / desktop browser QA remains outstanding when
 the approved browser infrastructure is unavailable.
+
+## 0.4 mission / arcade layer
+
+`shift-arcade.js` keeps serializable objective, inventory, boost, IV-phantom,
+A-line-setup and pharmacy state under `shift.arcade`. `ensureArcade` lazily adds it
+to version-3 floor saves without clearing notes or clinical events. Clinical care
+still runs through `shift-engine.js`; clue cards record obtained findings rather
+than fabricating an assessment from navigation. Scoring keys are awarded once.
+
+The floor UI uses compact station, bedside, computer, supply, Pyxis and iMobile
+workspaces. The full chart is retained. `shift-arcade.css` styles tactile pickup
+cards, a gray inventory bin, schematic puzzles and result effects. Map targets
+include the actual supply-room door / Pyxis; interaction range also checks walls.
+Movement is substepped, releases on the existing cancellation / blur lifecycle,
+and uses the sprint multiplier independently of the clinical clock.
+
+The tests cover clue / reassessment chronology, actual supply use, labs-versus-IV
+branches, pharmacy queue / label / delivery states, setup pressure / air / level
+gates, duplicate reward prevention, deadline holds, saved notes and reachable
+geometry. Browser and actual iPhone checks remain distinct from engine tests.

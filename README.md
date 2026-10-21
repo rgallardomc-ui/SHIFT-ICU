@@ -10,7 +10,7 @@ reassess changes, document and hand off unfinished concerns.
 
 - Repository: [rgallardomc-ui/SHIFT-ICU](https://github.com/rgallardomc-ui/SHIFT-ICU).
 - Live game: [Play SHIFT: ICU](https://rgallardomc-ui.github.io/SHIFT-ICU/).
-- **Version 0.3 is live.** The floor framework and earlier Delta improvements were
+- The floor framework and earlier Delta improvements were
   merged into `main` in [pull request #1](https://github.com/rgallardomc-ui/SHIFT-ICU/pull/1).
 - The first floor release, `b885b3e`, passed [Pages deployment #2](https://github.com/rgallardomc-ui/SHIFT-ICU/actions/runs/39521193404).
   Later source changes require a new successful deployment before appearing live.
@@ -19,7 +19,38 @@ GitHub is the source of truth. Retrieve current `main` and preserve the pending
 branch work before future edits. Pages deployments are manual; a source commit
 alone does not update the playable game.
 
-## The 0.3 floor framework
+## Play-first shift layer — 0.4
+
+The default floor now leads with one short objective and a highlighted destination.
+The full chart and clinical worklist remain available when the player needs them.
+
+- A central U-shaped station, with a supply room and Pyxis behind its back wall.
+- Three Celsius arcade sprint charges, a visible carried gray bin, supply-card
+  pickups, eight inventory slots, one-time quest points and short result feedback.
+- Three bedside clue cards that obtain the actual scripted assessment / device
+  findings. Cause-specific responses unlock from current findings and orders;
+  urgent team calls remain available immediately.
+- A seeded iMobile admission call, receiving report, visible ETA, room setup
+  upgrades and a safe transport hold when readiness is incomplete.
+- A dislodged peripheral-IV event with explicit intact critical-infusion access,
+  a labs-first or replacement-first plan, supplies and labelled Pyxis pickup.
+- An abstract ultrasound-IV phantom puzzle: inspect / identify the vessel,
+  reacquire the tip before each advance, and complete site / patency / securement
+  checks before the inventory is consumed and the task clears.
+- An A-line setup puzzle: assemble components, prime off the patient, remove air,
+  meet this case's bag-pressure target, level / zero, and obtain a prepared tray.
+  Catheter insertion remains assigned to the credentialed operator.
+- A pharmacy queue for the explicit Impella purge-order addendum, followed by
+  patient / strength / volume / route label matching, pickup and device-team handoff.
+- Short shift highlights; the detailed clinical task review is expandable.
+
+The score is an arcade score, not a clinical grade. The speed boost is a fictional
+power-up and does not change clinical time. Existing floor notes and the separate
+focused-case saves are preserved. The latest source needs its matching successful
+Pages workflow before the live URL changes.
+
+## The floor framework
+
 
 | Pod | Patient assignment pool |
 | --- | --- |
@@ -66,7 +97,7 @@ No installation or build step is required. Use Node.js 22 or newer for tests:
 npm test
 ```
 
-The release has **71 passing automated checks**, including the prior focused
+The release has **85 passing automated checks**, including the prior focused
 cases, all floor response / handoff paths, specialty boundaries, randomized room
 assignments, admissions, supplies / procedure gates, recurring deadlines, specimen
 chronology, TOF readiness, persistence and walkable routes.

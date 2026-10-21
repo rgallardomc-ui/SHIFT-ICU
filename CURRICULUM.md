@@ -82,3 +82,22 @@ airway / perfusion assessment and the team-directed resuscitation / GI pathway.
   current chart is a fictional training workspace, not a reproduction or integration.
 - Clinical educator / nurse-manager feedback. The study guide was sent for
   recommendations; approval has not been established.
+
+## Default interaction layer — 0.4
+
+The main experience uses short missions, revealed clues, concrete pickups and
+visible task results. Keep prolonged chart reading optional. A new interaction
+should change inventory, setup, observations, a patient / device state, a timer,
+communication state or progress; a repeated paragraph alone is insufficient.
+
+The U-shaped nursing station remains central to twelve rooms. Supply is behind
+its back wall, with Pyxis inside that room. The player carries a gray bin and has
+three fictional Celsius sprint charges per shift. Charge / iMobile introduces
+variable admission timing and a receiving-room ticket. Transport keeps care if
+readiness is incomplete. Humor targets unit logistics, not patients' distress.
+
+The first action puzzles are bedside clue discovery, a dislodged PIV / ordered
+lab branch, an abstract ultrasound phantom, and A-line setup. The pharmacy quest
+requires an explicit fictional heparin-contraindication / device-team order;
+preparation, collection, verification and team connection are separate actions.
+Exact SLED hardware and local workflows remain awaiting the offered material.
