@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createShift,advanceShift,performCare,profileOf,restoreShift,endShift,acceptAdmission} from '../dist/shift-engine.js';
 import {ensureArcade,award,activateBoost,updateArcade,answerPhone,revealClue,packOne,removeOne,assessIV,chooseAccessPlan,pickFlush,startIV,ivStep,startALine,alineStep,requestPurge,collectPurge,deliverPurge,missionFor,ALINE_PARTS} from '../dist/shift-arcade.js';
-import {interactionTargets,routeBetween,walkAllowed,nearestTarget,moveNurse} from '../dist/shift-map.js';
+import {interactionTargets,routeBetween,walkAllowed,nearestTarget,moveNurse,followRoute} from '../dist/shift-map.js';
 function initial(seed=23){const s=createShift({level:2,pod:'delta',seed});ensureArcade(s,{fresh:true});return s;}
 function baseline(s){const p=s.patients[0];performCare(s,p.room,'report');for(const id of ['patient','monitor','device'])revealClue(s,p.room,id);performCare(s,p.room,'orders');performCare(s,p.room,'meds',profileOf(p).med.correct);updateArcade(s);return p;}
 function impella(){for(let seed=1;seed<100;seed++){const s=initial(seed);if(profileOf(s.patients[0]).icon==='impella')return s;}throw Error('No seeded Impella assignment');}
@@ -94,4 +94,14 @@ test('supply and Pyxis are reachable behind the U station; interaction does not 
 });
 test('ended shifts do not generate supplies, boosts or puzzle progress',()=>{
  const s=initial();baseline(s);assessIV(s);endShift(s);assert.equal(packOne(s,'iv-kit').ok,false);assert.equal(activateBoost(s).ok,false);assert.equal(startIV(s).ok,false);assert.equal(startALine(s).ok,false);assert.equal(removeOne(s,'care').ok,false);
+});
+
+test('tap-to-walk speed survives short waypoints and lower frame rates without crossing walls',()=>{
+ const route=[{x:430,y:610},{x:430,y:630},{x:450,y:630},{x:470,y:630},{x:490,y:630},{x:510,y:630}];
+ const normal={x:410,y:610},smooth={...normal},boosted={...normal};const a=structuredClone(route),b=structuredClone(route),c=structuredClone(route);
+ followRoute(normal,a,.25);for(let i=0;i<15;i++)followRoute(smooth,b,1/60);followRoute(boosted,c,.25,1.75);
+ assert.ok(Math.hypot(normal.x-smooth.x,normal.y-smooth.y)<.001);assert.ok(boosted.x>normal.x);assert.equal(a.length,b.length);
+ const lagged={x:410,y:610},sixty={...lagged};const d=routeBetween(lagged,{x:1100,y:610}),e=structuredClone(d);
+ followRoute(lagged,d,1);for(let i=0;i<60;i++)followRoute(sixty,e,1/60);assert.ok(Math.hypot(lagged.x-sixty.x,lagged.y-sixty.y)<.001);
+ const wall={x:450,y:480};followRoute(wall,[{x:600,y:480}],.25,2);assert.ok(wall.x<462);assert.ok(walkAllowed(wall.x,wall.y));
 });
