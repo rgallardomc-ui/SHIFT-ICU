@@ -97,7 +97,7 @@ No installation or build step is required. Use Node.js 22 or newer for tests:
 npm test
 ```
 
-The release has **85 passing automated checks**, including the prior focused
+The release has **86 passing automated checks**, including the prior focused
 cases, all floor response / handoff paths, specialty boundaries, randomized room
 assignments, admissions, supplies / procedure gates, recurring deadlines, specimen
 chronology, TOF readiness, persistence and walkable routes.
