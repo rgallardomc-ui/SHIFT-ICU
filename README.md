@@ -10,18 +10,16 @@ reassess changes, document and hand off unfinished concerns.
 
 - Repository: [rgallardomc-ui/SHIFT-ICU](https://github.com/rgallardomc-ui/SHIFT-ICU).
 - Live game: [Play SHIFT: ICU](https://rgallardomc-ui.github.io/SHIFT-ICU/).
-- Last verified public deployment: original six-case import, `f7094d0`.
-- Eight-case update: saved on the GitHub branch `delta-v0.2`, `9bdaba8`.
-- This **0.3 floor implementation is a pending candidate**. It has not yet been
-  merged / deployed. GitHub connection writes returned HTTP403 and browser control
-  was unavailable. The live URL must not be described as containing this update
-  until a new successful Pages deployment is verified.
+- **Version 0.3 is live.** The floor framework and earlier Delta improvements were
+  merged into `main` in [pull request #1](https://github.com/rgallardomc-ui/SHIFT-ICU/pull/1).
+- The first floor release, `b885b3e`, passed [Pages deployment #2](https://github.com/rgallardomc-ui/SHIFT-ICU/actions/runs/39521193404).
+  Later source changes require a new successful deployment before appearing live.
 
 GitHub is the source of truth. Retrieve current `main` and preserve the pending
 branch work before future edits. Pages deployments are manual; a source commit
 alone does not update the playable game.
 
-## The 0.3 candidate
+## The 0.3 floor framework
 
 | Pod | Patient assignment pool |
 | --- | --- |
@@ -68,13 +66,16 @@ No installation or build step is required. Use Node.js 22 or newer for tests:
 npm test
 ```
 
-The candidate has **71 passing automated checks**, including the prior focused
+The release has **71 passing automated checks**, including the prior focused
 cases, all floor response / handoff paths, specialty boundaries, randomized room
 assignments, admissions, supplies / procedure gates, recurring deadlines, specimen
 chronology, TOF readiness, persistence and walkable routes.
 
-Browser / actual iPhone QA is still required. Passing engine checks does not
-establish clinical accuracy or input / layout behavior on a real device.
+Desktop browser spot checks confirmed floor setup, a generated Delta admission
+assignment, walking to the station, report, Orders / MAR / SBAR navigation and
+restored authored notes after reloading. Actual iPhone QA and complete shift
+playthroughs remain pending. Passing engine checks does not establish clinical
+accuracy or input / layout behavior on a real device.
 
 Serve `dist/` over HTTP to run ES modules; do not open the HTML file directly:
 
