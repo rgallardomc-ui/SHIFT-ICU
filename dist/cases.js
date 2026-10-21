@@ -1,8 +1,10 @@
+import {DELTA_CASES} from './delta-cases.js';
+
 export const PODS = [
  {id:'alpha',letter:'A',name:'ALPHA',type:'Intermediate care',color:'#e6ba70',tag:'The change you catch early.',text:'Spot deterioration, prioritize a growing assignment, and know when IMC is no longer enough.',planned:['Respiratory decline → rapid response','Telemetry changes & electrolyte replacement','GI bleed: the trend before the crash','Priorities, transfers & a safe handoff']},
  {id:'bravo',letter:'B',name:'BRAVO',type:'Medical ICU',color:'#76d5ba',tag:'Connect the whole picture.',text:'Resuscitation, metabolic emergencies, fluid decisions, and the reassessment that changes your plan.',planned:['ARDS & ventilator troubleshooting','CRRT: access, alarms & fluid balance','Mixed shock with heart failure','Albumin: indication, grams & volume']},
  {id:'charlie',letter:'C',name:'CHARLIE',type:'Neuro ICU',color:'#aaa4ee',tag:'A small change can be everything.',text:'Build a reliable baseline, recognize neurologic change, and protect perfusion while escalating.',planned:['Stroke: last known well & escalation','EVD: leveling, drainage & safe movement','TBI: ICP, MAP & CPP together','Seizure activity, EEG & sedation confounders']},
- {id:'delta',letter:'D',name:'DELTA',type:'Cardiac ICU',color:'#ed9f86',tag:'The monitor is only half the story.',text:'Assess perfusion, decode mechanical support, and make the call before the patient loses ground.',planned:['CABG: bleeding, tamponade & output','VA vs VV ECMO: what each supports','ECMO alarms with the specialist team','Impella: hemolysis, purge & arrest','CP vs 5.5 vs RV support: escalation']}
+ {id:'delta',letter:'D',name:'DELTA',type:'Cardiac ICU',color:'#ed9f86',tag:'The monitor is only half the story.',text:'Assess perfusion, decode mechanical support, and make the call before the patient loses ground.',planned:['CABG: bleeding, tamponade & output','VA vs VV ECMO: what each supports','ECMO alarms with the specialist team','Impella: arrest and additional purge problems','CP vs 5.5 vs RV support: escalation']}
 ];
 
 const obs = (id,title,result,why) => ({id,title,result,why});
@@ -118,6 +120,7 @@ export const CASES = [
   reassessment:'Expected pressure separation and pulsatile motor current return. Systemic MAP is 70 in this scripted result. Record the new mark and reassess the patient and axillary circulation.',
   debrief:['The red trace can become ventricular-looking when its sensing region is no longer properly in the aorta.','White is estimated, so waveform pattern matters more than expecting identical values in every case.','Use echo and reliable systemic pressure; do not diagnose or reposition from green alone.'],
   exampleNote:'New position-in-ventricle alarm. Systemic arterial MAP 60; controller Ao 101/12 and estimated LV 101/12 with nearly flat motor current. Reduced support to P2 per position-alarm order; device team notified and urgent position assessment obtained. Operator corrected position; new mark documented. Following prescribed support restoration, systemic MAP 70 and expected pressure separation/motor pulsatility present. Axillary site, arm circulation and perfusion reassessed.'}),
+ ...DELTA_CASES,
  {
  id:'sepsis',pod:'bravo',level:'B1',title:'The pressure keeps dropping',subtitle:'Resuscitate, reassess, escalate.',minutes:'12–18 min',patient:'Patient B-02 · 58 years · 80 kg · suspected pneumonia',device:'Sepsis resuscitation · arterial line',alarm:'MAP BELOW CASE TARGET',vitals:{HR:128,MAP:55,SpO2:91,UO:18},targets:'Case order: MAP ≥65 mmHg; oxygen to prescribed target; reassess after each intervention.',
  intro:'You receive a patient with probable infection, hypotension and impaired perfusion. A fluid calculation is one part of a time-sensitive assessment.',

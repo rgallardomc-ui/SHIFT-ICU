@@ -5,14 +5,15 @@ import {newRun,observe,act,finish,metrics,albuminVolume} from '../dist/engine.js
 
 test('all four pods are distinct and every case points to a real pod',()=>{
  assert.equal(PODS.length,4);assert.equal(new Set(PODS.map(p=>p.id)).size,4);
- assert.equal(CASES.length,6);
+ assert.equal(CASES.length,8);
+ assert.equal(CASES.filter(c=>c.pod==='delta').length,6);
  for(const c of CASES){assert(PODS.some(p=>p.id===c.pod));assert.equal(new Set(c.actions.map(a=>a.id)).size,c.actions.length);}
 });
 for(const c of CASES){
  test(`${c.id}: a complete ordered care path reaches a documented handoff`,()=>{
   const r=newRun(c.id);assert.equal(finish(r).ok,false);
   observe(r,'report');observe(r,'orders');for(const o of c.assessments)observe(r,o.id);
-  for(const a of c.actions.filter(a=>!a.unsafe)){const result=act(r,a.id,a.calculation?.expected);assert.equal(result.ok,true,`${a.id}: ${result.text}`);}
+  for(const a of c.actions.filter(a=>!a.unsafe)){const result=act(r,a.id,a.reasoning?.expected??a.calculation?.expected);assert.equal(result.ok,true,`${a.id}: ${result.text}`);}
   assert.equal(finish(r).ok,false,'a note is needed even after interventions');
   for(const k of Object.keys(r.note))r.note[k]='A meaningful fictional practice sentence.';
   assert.equal(finish(r).ok,true);assert.equal(r.finished,true);assert.equal(metrics(r).done,c.goals.length);
