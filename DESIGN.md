@@ -1,6 +1,6 @@
 # SHIFT: ICU
 
-Created by Rafael Gallardo, RN. First playable build: 0.1. Current build: 0.2.
+Created by Rafael Gallardo, RN. First playable build: 0.1. Current candidate: 0.3.
 
 ## The game Rafael described
 
@@ -77,3 +77,53 @@ The manager/educator review should confirm device/software version, action order
 ## Technical shape
 
 Dependency-free static HTML/CSS/JS. Clinical cases are data in `dist/cases.js`; the pure state engine is `dist/engine.js`; presentation and optional speech are in `dist/app.js`. This separation permits reviewed case updates without rewriting movement or UI. Engine tests cover safety gates, task reachability, complete handoff, calculations and position-alarm settings. Browser UI QA remains separate from unit verification.
+
+
+## Walkable floor candidate — 0.3
+
+The primary entry point is now a floor shift. The original eight focused cases
+and their save key remain intact. `CURRICULUM.md` records the user direction,
+pod boundaries, current profiles and material still needed for facility-specific
+work. Do not mistake the new candidate for a verified live Pages deployment.
+
+- `shift-data.js`: fictional patient profiles, specialty / acuity boundaries,
+  shift formats, supplies, procedure equipment and medication-role reference.
+- `shift-engine.js`: deterministic assignment generation, recurring deadlines,
+  patient change / response stages, supply / admission and procedure gates,
+  observations / charting / handoff state and journal export. This is pure logic.
+- `shift-map.js`: twelve-room geometry, walls / furniture, pathfinding, normalized
+  movement and original canvas pixel drawing. The nurse walks through doorways;
+  shortcut buttons provide a route rather than teleportation.
+- `shift-floor.js`: accessible setup / controls, live scheduling, patient / chart
+  workspaces, touch / keyboard input, optional speech and local persistence.
+- `shift-floor.css`: responsive floor / modal layouts and large touch targets.
+- `tests/shift.test.mjs`: assignment scopes, complete paths, chronology, safety
+  gates, persistence, recurring care and route / collision behavior.
+
+An assignment seed selects profiles, rooms and change timing. First rounds uses
+two patients, admission mode starts with one and accepts a second only after
+actual room / handoff readiness, and the long Alpha shift can use three stable
+step-down profiles. This is game capacity, not a staffing standard. No delegation
+system is present; specialists are required clinical roles, not a way to offload
+the player's nursing tasks.
+
+Coached mode pauses continuous time while reading; independent mode continues it.
+Action costs remain explicit compressed simulation time. Equipment drills pause
+the floor and have their own optional timer. Hidden pages / window blur pause the
+floor; all key, pointer / cancellation and capture-loss paths release movement.
+Destroying a floor screen aborts its listeners, animation and optional dictation.
+
+Actions do not automatically document unperformed care. Obtained observations
+retain performed timestamps until reviewed / entered into the flowsheet, where
+charting timestamps are separate. SBAR remains authored text with a completeness
+check only. New care invalidates an earlier handoff review without deleting the
+note. Sample collection and result stages are distinct; a pre-change sample
+cannot become a post-change result. A treatment plan does not instantly normalize
+patient values; a later actual response assessment exposes the scripted follow-up.
+
+The patient model is a first set of workflow snapshots. It is not continuous
+physiology / drug kinetics, a manufacturer emulator or a complete twelve-hour
+course of every complication. Later work should add reviewed evolving states,
+procedure / medication detail and alternative care paths before claiming a full
+specialty curriculum. Real phone / desktop browser QA remains outstanding when
+the approved browser infrastructure is unavailable.

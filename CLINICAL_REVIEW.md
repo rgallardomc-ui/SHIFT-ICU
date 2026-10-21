@@ -1,6 +1,6 @@
 # Clinical review record
 
-Build 0.2 · source check performed October 20, 2026.
+Build 0.3 candidate · source checks performed October 20, 2026.
 
 **Nurse-manager/educator approval has not been established.** This is a fictional,
 unvalidated educational prototype. A source check is distinct from independent
@@ -55,3 +55,59 @@ educator/device team. Add reviewer name, reviewed date, protocol version and sco
 only after that review occurs. Source-checking by the developer does not fill those
 fields. The Bravo cases and general pocket guide retain their prototype status;
 this Delta review does not establish approval of either.
+
+## Floor workflow review — 0.3 candidate
+
+The first floor framework adds fifteen fictional patient profiles and three shift
+formats. This is a source-informed draft, not a completed clinical curriculum or
+validated continuous patient model. The separate focused-case engine is retained.
+
+| Primary / organizational source | Scope checked | Game application / limit |
+| --- | --- | --- |
+| [AARC adult SBT guideline, 2024](https://www.aarc.org/wp-content/uploads/2023/11/CPG2024SpontaneousBreathingTrial.pdf) | Readiness, trial tolerance, airway protection and extubation distinction | Medical recovery and post-status-airway cases; RT / provider own the scripted trial / extubation events |
+| [CDC catheter recommendations](https://www.cdc.gov/infection-control/hcp/intravascular-catheter-related-infections/summary-recommendations.html), current page dated 2024, guideline 2011 | Trained staff, maximal CVC barriers, skin antisepsis and closed sterile pressure systems | Arterial / CVC equipment preparation. No insertion, site-selection or catheter-use authorization is granted by a correct tray |
+| [SNACC EVD / lumbar-drain guidance](https://snacc.org/wp-content/uploads/2016/11/SNACC_EVD_LD_Manuscript.pdf), 2017 | Reference level, drainage versus measurement state, inspection, movement and handoff | Explicit fictional 15 cmH₂O order; ICP / CPP readings identify a valid ordered measurement context. Invasive actions are restricted by this case, not by a universal assertion about RN scope |
+| [EVD nursing guideline-development study](https://doi.org/10.3390/nursrep12040090), 2022 | Indexed abstract / sections on nursing observation and leveling | Supporting reference only; publisher full text was rate-limited. Does not establish an HCA protocol |
+| [KDIGO AKI guideline / update page](https://kdigo.org/guidelines/acute-kidney-injury/) and final 2012 guideline section 5.6 | SLED / other RRT context, hemodynamic tolerance and current update status | Generic prescription / net-removal case. The official 2026 document remained a public-review draft / publication in preparation; it was not treated as final guidance. No machine IFU is assumed |
+| [AHA special-circumstance resuscitation guidance](https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines/adult-and-pediatric-special-circumstances-of-resuscitation/), 2025 | Cardiac surgery, bleeding / tamponade, specialist response | CABG change recognition and escalation. No complete arrest / chest-reopening algorithm is implemented. The earlier STS consensus was also inspected as background |
+| [AHA post–cardiac arrest care](https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines/post-cardiac-arrest-care), 2025 | Receiving assessment of ventilation, circulation and diagnostic plan | Admission / infusion handoff; early exam and pressor count do not provide individual prognosis |
+| [SCCM SSC adult guidance](https://www.sccm.org/clinical-resources/guidelines/guidelines/surviving-sepsis-campaign-international-guidelines-for-management-of-sepsis-and-septic-shock-2026), 2026 | Perfusion / congestion, reassessment and escalation | Stabilized Alpha transfer with renewed deterioration. No universal fluid or pressor order is inferred |
+| [ADA / EASD collaborative crisis consensus](https://pmc.ncbi.nlm.nih.gov/articles/PMC11272983/), 2024, transition section | Resolution context, transition / last-dose handoff and nutrition | Alpha patient has already transitioned under a prescribed regimen. The meal / MAR discrepancy is reconciled rather than restarting an old infusion or diagnosing from glucose alone |
+| [AHA / ASA spontaneous ICH summary](https://professional.heart.org/en/science-news/2022-guideline-for-the-management-of-patients-with-spontaneous-intracerebral-hemorrhage/top-things-to-know), 2022 | New neuro deficits and team / diagnostic management | Case explicitly has diagnosed spontaneous intraparenchymal hemorrhage. Its coincident fall does not make this a general traumatic-hemorrhage protocol |
+| [AASLD variceal bleeding explanation](https://www.aasld.org/liver-fellow-network/core-series/why-series/why-do-we-use-early-tips-management-variceal-bleeding) and [current guidance index](https://www.aasld.org/practice-guidelines/portal-hypertension-bleeding-cirrhosis) | Resuscitation, prescribed vasoactive / antibiotic therapy and endoscopic pathway | No automatic CTA, transfusion threshold or drug-dose algorithm. The linked primary practice-guidance DOI was paywalled; full educator / GI review remains necessary |
+| [SCCM ARDS neuromuscular-blockade guideline](https://www.sccm.org/clinical-resources/guidelines/guidelines/guidelines-for-the-administration-of-neuromuscular-blockade), 2026 | Conditional recommendations / uncertainty in NMBA, dosing and monitoring strategies | Team-selected readiness / TOF documentation exercise, not mandatory paralysis for every ventilated or proned patient; no universal TOF target / stimulus / titration method |
+| [SCCM PADIS guidance and linked 2025 update](https://www.sccm.org/clinical-resources/guidelines/guidelines/guidelines-for-the-prevention-and-management-of-pa) and [rocuronium label](https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=1543ea2b-54ab-4088-a72a-5d71854a2dce) | Distinct analgesia / sedation roles; adequate anesthesia / sedation with paralysis; respiratory support | No guessed fentanyl / propofol / midazolam / pressor bundle. TOF is not pain or awareness monitoring; movement-based RASS cannot establish sedation during paralysis. No prolonged ICU rocuronium regimen is supplied |
+
+### Explicit fictional assumptions
+
+- Numerical vitals, targets, lab reference intervals, collection schedules, room
+  equipment, observed TOF current / site / counts and responses belong to each case.
+- Fifteen-minute and hourly observations, two-hour positioning and laboratory
+  schedules are game prescriptions. They do not define unit staffing, observation
+  frequency or authority for every patient at that acuity.
+- Net UF may be held by the trained RN only under the SLED case's explicit order.
+  That does not stop the blood pump or authorize circuit disconnection, albumin,
+  fluid loading, a new UF goal or a new modality.
+- New instability never requires finishing the routine report / chart / assessment
+  checklist before notifying the clinical team. Cause-specific responses need the
+  relevant findings and order. A clinical positioning hold retains the unfinished
+  task and a reassessment deadline rather than marking a turn complete.
+- A plan does not instantly replace the current exam with improved findings.
+  Response assessment waits for its displayed interval. The prior-hour urine value
+  remains a prior measurement; no instant renal recovery is invented.
+- The current laboratory engine provides case snapshots with collection / result
+  timestamps; it is not a biochemical or treatment-kinetics model. A pre-change
+  sample cannot turn into evidence of a later event.
+- Flowsheets record observations obtained by the player, keeping performed time
+  separate from charting time. Authored SBAR text is never automatically declared
+  clinically correct. The checklist measures field completeness only.
+- Admission screening and blood-bank identification depend on the actual orders
+  and local process. The unclear dictated medication / band names are not guessed.
+- The Expanse-style workspace is a fictional organization of orders, worklist,
+  MAR, diagnostics and documentation. There is no hospital EHR connection or claim
+  of an exact Meditech screen / configuration.
+
+Clinical educator / manager / specialty review and actual phone / desktop browser
+QA remain separate from the automated scenario checks. Source checking does not
+fill a reviewer approval field. The offered SLED photograph, machine IFU and local
+scope / charting examples are still needed before a facility-specific version.
