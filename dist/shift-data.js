@@ -8,7 +8,7 @@ export const FLOOR_PODS = {
 
 export const SHIFT_LEVELS = [
   {id: 1, name: 'First rounds', duration: 240, description: 'Two patients. Four compressed hours. Learn the floor and establish your routine.'},
-  {id: 2, name: 'An admission is coming', duration: 240, description: 'Start with one patient. Prepare an empty room, receive report, and accept the second.'},
+  {id: 2, name: 'An admission is coming', duration: 240, description: 'One patient, a ringing iMobile and a room to get ready. Follow the objective and learn by doing.'},
   {id: 3, name: 'The whole night', duration: 720, description: 'Twelve compressed hours. Repeated observations, competing changes, and a complete handoff.'}
 ];
 

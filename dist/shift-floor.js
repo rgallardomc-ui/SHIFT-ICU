@@ -1,7 +1,9 @@
-import {FLOOR_PODS, SHIFT_LEVELS, SUPPLIES, PROCEDURES, ADMISSIONS, NOTE_FIELDS, DRUG_ROLES} from './shift-data.js';
-import {createShift, restoreShift, patientAt, profileOf, clockAt, openTasks, advanceShift, packSupplies, returnSupplies, checkProcedure, receiveAdmissionReport, installAdmissionSupply, acceptAdmission, recordNote, performCare, endShift, shiftSummary, exportShift, SIM_MINUTES_PER_SECOND} from './shift-engine.js';
-import {roomGeometry, routeBetween, moveNurse, nearestTarget, interactionTargets, drawFloor} from './shift-map.js';
-import {CLINICAL_SOURCES} from './sources.js';
+import {FLOOR_PODS, SHIFT_LEVELS, SUPPLIES, PROCEDURES, ADMISSIONS, NOTE_FIELDS, DRUG_ROLES} from './shift-data.js?v=0.4.0';
+import {createShift, restoreShift, patientAt, profileOf, clockAt, openTasks, advanceShift, packSupplies, returnSupplies, checkProcedure, receiveAdmissionReport, installAdmissionSupply, acceptAdmission, recordNote, performCare, endShift, shiftSummary, exportShift, SIM_MINUTES_PER_SECOND} from './shift-engine.js?v=0.4.0';
+import {roomGeometry, routeBetween, moveNurse, nearestTarget, interactionTargets, drawFloor, walkAllowed} from './shift-map.js?v=0.4.0';
+import {CLINICAL_SOURCES} from './sources.js?v=0.4.0';
+
+import {ensureArcade, award, activateBoost, updateArcade, answerPhone, bedsideClues, revealClue, packOne, removeOne, assessIV, chooseAccessPlan, pickFlush, startIV, ivStep, startALine, alineStep, requestPurge, collectPurge, deliverPurge, missionFor, ALINE_PARTS, identityFor} from './shift-arcade.js?v=0.4.0';
 
 const STORE = 'shift-icu-floor-v3';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
@@ -11,7 +13,7 @@ const pendingKind = (p, kind) => p.tasks.find(t => t.kind === kind && !t.done);
 
 export function createShiftGame({app, onExit}) {
   const controller = new AbortController(), signal = controller.signal;
-  let shift = null, pod = 'delta', mode = 'coached', level = 1, frame = 0, previous = 0, clockBudget = 0;
+  let shift = null, pod = 'delta', mode = 'coached', level = 2, frame = 0, previous = 0, clockBudget = 0;
   let path = [], destination = null, autoInteract = false, camera = null, keys = new Set(), pointerDirections = new Map();
   let canvas = null, currentView = null, speech = null, lastHud = 0, lastControls = 0, lastSave = 0, storageOkay = true, destroyed = false;
   let vault = {active: null, history: []};
@@ -69,17 +71,17 @@ export function createShiftGame({app, onExit}) {
     cancelAnimationFrame(frame); canvas = null; closeDialog();
     document.body.classList.remove('floor-mode');
     const saved = vault.active;
-    app.innerHTML = `<section class="shift-intro"><p class="eyebrow">CLOCK IN / FLOOR SHIFT</p><h1>Your patients.<br>Your floor.<br><em>Your next move.</em></h1><p>Walk the unit, receive report, prepare the room and keep up with the care. A new assignment changes the rooms, patient mix and timing.</p>${saved ? `<div class="floor-resume"><strong>${FLOOR_PODS[saved.pod].name} · ${clockAt(saved.elapsed)} · ${saved.patients.length} patient${saved.patients.length === 1 ? '' : 's'}</strong>${button('resume', saved.ended ? 'Review last debrief' : 'Resume my shift', '', 'primary')}</div>` : ''}<div class="floor-pod-choices">${Object.entries(FLOOR_PODS).map(([id, p]) => `<button class="floor-pod-choice ${pod === id ? 'selected' : ''}" data-shift="choose-pod" data-pod="${id}" aria-pressed="${pod === id}" style="--pod:${p.color}"><b>${p.name}</b><span>${p.specialty}</span></button>`).join('')}</div><div class="floor-setup-fields"><label>Shift<select id="floorLevel">${SHIFT_LEVELS.map(l => `<option value="${l.id}" ${level === l.id ? 'selected' : ''}>${l.id}. ${l.name}</option>`).join('')}</select></label><label>Support<select id="floorMode"><option value="coached" ${mode === 'coached' ? 'selected' : ''}>Coached · reading pauses the clock</option><option value="independent" ${mode === 'independent' ? 'selected' : ''}>Independent · clock runs in workspaces</option></select></label></div><p class="floor-level-description">${esc(SHIFT_LEVELS.find(l => l.id === level).description)}</p><div class="buttons">${button('new', 'Receive my assignment →', '', 'primary')}${button('exit', 'Hospital / focused cases', '', 'quiet')}</div><div class="floor-expectations"><span>⌂ 12 rooms to explore</span><span>↔ Keyboard, tap-to-walk or touch pad</span><span>◷ 1 real minute = 30 simulated minutes</span></div><details class="floor-explainer"><summary>Before you clock in</summary><p>Nursing actions also advance a small amount of simulated time. Pause whenever needed. Independent play adds scheduling pressure; time alone never authorizes unsafe care. Alpha’s later shift can have three stable patients; the high-acuity ICU shifts use one or two.</p><p>The floor cases use fictional orders and scripted responses. SLED is a generic workflow until the exact machine is confirmed. Invasive procedures and specialist device changes remain assigned to the trained clinical team. No delegation system is included.</p><p>Your existing focused-case notes are preserved separately. Starting a new floor shift keeps up to ten earlier floor shifts in this browser. ${storageOkay ? 'Progress saves automatically.' : 'Storage is unavailable; export before leaving.'}</p></details>${vault.history.length ? `<details class="floor-explainer"><summary>Earlier shifts (${vault.history.length})</summary><div class="floor-history">${vault.history.map((s, i) => button('history', `${FLOOR_PODS[s.pod].name} · ${clockAt(s.elapsed)} · seed ${s.seed}`, `data-index="${i}"`)).join('')}</div></details>` : ''}</section>`;
+    app.innerHTML = `<section class="shift-intro"><p class="eyebrow">CLOCK IN / FLOOR SHIFT</p><h1>Your patients.<br>Your floor.<br><em>Your next move.</em></h1><p>Spot clues. Fill your gray bin. Beat the next interruption. Charge has the report; your iMobile has the surprises.</p>${saved ? `<div class="floor-resume"><strong>${FLOOR_PODS[saved.pod].name} · ${clockAt(saved.elapsed)} · ${saved.patients.length} patient${saved.patients.length === 1 ? '' : 's'}</strong>${button('resume', saved.ended ? 'Review last debrief' : 'Resume my shift', '', 'primary')}</div>` : ''}<div class="floor-pod-choices">${Object.entries(FLOOR_PODS).map(([id, p]) => `<button class="floor-pod-choice ${pod === id ? 'selected' : ''}" data-shift="choose-pod" data-pod="${id}" aria-pressed="${pod === id}" style="--pod:${p.color}"><b>${p.name}</b><span>${p.specialty}</span></button>`).join('')}</div><div class="floor-setup-fields"><label>Shift<select id="floorLevel">${SHIFT_LEVELS.map(l => `<option value="${l.id}" ${level === l.id ? 'selected' : ''}>${l.id}. ${l.name}</option>`).join('')}</select></label><label>Support<select id="floorMode"><option value="coached" ${mode === 'coached' ? 'selected' : ''}>Coached · reading pauses the clock</option><option value="independent" ${mode === 'independent' ? 'selected' : ''}>Independent · clock runs in workspaces</option></select></label></div><p class="floor-level-description">${esc(SHIFT_LEVELS.find(l => l.id === level).description)}</p><div class="buttons">${button('new', 'Receive my assignment →', '', 'primary')}${button('exit', 'Hospital / focused cases', '', 'quiet')}</div><div class="floor-expectations"><span>⌂ 12 rooms to explore</span><span>↔ Keyboard, tap-to-walk or touch pad</span><span>◷ 1 real minute = 30 simulated minutes</span></div><details class="floor-explainer"><summary>Before you clock in</summary><p>Nursing actions also advance a small amount of simulated time. Pause whenever needed. Independent play adds scheduling pressure; time alone never authorizes unsafe care. Alpha’s later shift can have three stable patients; the high-acuity ICU shifts use one or two.</p><p>The floor cases use fictional orders and scripted responses. SLED is a generic workflow until the exact machine is confirmed. Invasive procedures and specialist device changes remain assigned to the trained clinical team. No delegation system is included.</p><p>Your existing focused-case notes are preserved separately. Starting a new floor shift keeps up to ten earlier floor shifts in this browser. ${storageOkay ? 'Progress saves automatically.' : 'Storage is unavailable; export before leaving.'}</p></details>${vault.history.length ? `<details class="floor-explainer"><summary>Earlier shifts (${vault.history.length})</summary><div class="floor-history">${vault.history.map((s, i) => button('history', `${FLOOR_PODS[s.pod].name} · ${clockAt(s.elapsed)} · seed ${s.seed}`, `data-index="${i}"`)).join('')}</div></details>` : ''}</section>`;
   }
   function newAssignment() {
     if (vault.active) vault.history = [...vault.history, JSON.parse(JSON.stringify(vault.active))].slice(-10);
     const seed = globalThis.crypto?.getRandomValues ? crypto.getRandomValues(new Uint32Array(1))[0] : Date.now();
-    shift = createShift({pod, mode, level, seed}); save(); mount();
+    shift = createShift({pod, mode, level, seed}); ensureArcade(shift,{fresh:true}); save(); mount();
   }
   function mount() {
-    closeDialog(); document.body.classList.add('floor-mode');
+    closeDialog(); ensureArcade(shift); if(!walkAllowed(shift.player.x,shift.player.y))shift.player={x:1000,y:580}; document.body.classList.add('floor-mode');
     const p = FLOOR_PODS[shift.pod];
-    app.innerHTML = `<section class="floor-game" style="--pod:${p.color}"><header class="floor-heading"><div><p class="eyebrow">${p.specialty} / ${SHIFT_LEVELS.find(l => l.id === shift.level).name}</p><h1>${p.name}<span> · Night shift</span></h1></div><div class="floor-clock"><b id="shiftClock">${clockAt(shift.elapsed)}</b><span id="shiftReadingStatus"></span></div></header><div class="floor-toolbar">${button('go-station', 'Report / charts')}${button('go-supply', 'Supplies')}${button('go-charge', 'Charge nurse')}${button('pause', shift.paused ? 'Resume clock' : 'Pause', 'id="shiftPause"')}${button('end-prompt', 'Handoff / finish', '', 'quiet')}</div><div id="shiftAlert" class="floor-alert" aria-live="polite"></div><div class="floor-layout"><div class="floor-play"><div class="floor-viewport"><canvas id="shiftFloorCanvas" tabindex="0" role="img" aria-label="Walkable twelve-room ICU floor. Tap to walk or use arrows or W A S D. Use the room and destination buttons for accessible navigation." aria-describedby="floorMovementHint"></canvas><span class="floor-map-caption">${p.name.toUpperCase()} / ROOMS 01–12</span><span id="floorPauseCover" class="floor-paused" hidden>PAUSED</span></div><div class="floor-controls"><div class="floor-pad" aria-label="Nurse movement"><button data-floor-dir="up" aria-label="Walk up">▲</button><button data-floor-dir="left" aria-label="Walk left">◀</button><button data-floor-dir="down" aria-label="Walk down">▼</button><button data-floor-dir="right" aria-label="Walk right">▶</button></div><div class="floor-interact-wrap"><button id="shiftInteract" class="primary" data-shift="interact">Walk toward a bedside or computer</button><span id="floorMovementHint">Tap to walk · arrows / WASD · E or space to interact</span></div></div><p id="shiftFeedback" class="floor-feedback" role="status" aria-live="polite">${esc(shift.feedback)}</p><div class="floor-cart"><b>YOUR CART</b><span id="shiftInventory"></span>${button('export', 'Export journal', '', 'quiet')}<span id="shiftSaveStatus"></span></div></div><aside class="floor-board"><div class="floor-board-heading"><h2>Your assignment</h2><span id="shiftProgress"></span></div><div id="shiftPatients"></div><div id="shiftAdmission"></div><h3>Coming due</h3><div id="shiftDue"></div><p class="helper">Urgent calls are available from your radio. Patient checks happen at the bedside; charts and notes are at computers.</p></aside></div></section>`;
+    app.innerHTML = `<section class="floor-game" style="--pod:${p.color}"><header class="floor-heading"><div><p class="eyebrow">${p.specialty} / ${SHIFT_LEVELS.find(l => l.id === shift.level).name}</p><h1>${p.name}<span> · Night shift</span></h1></div><div class="floor-clock"><b id="shiftClock">${clockAt(shift.elapsed)}</b><span id="shiftReadingStatus"></span></div></header><div class="floor-toolbar">${button('go-station', 'Report / charts')}${button('go-supply', 'Supplies')}${button('go-charge', 'Charge nurse')}${button('pause', shift.paused ? 'Resume clock' : 'Pause', 'id="shiftPause"')}${button('end-prompt', 'Handoff / finish', '', 'quiet')}</div><section id="arcadeMission" class="arcade-mission" aria-label="Current objective"></section><div class="arcade-tools">${button('phone-open','☎ iMobile','id="arcadePhone"')}${button('boost','⚡ Celsius ×3','id="arcadeBoost"')}<span id="arcadeETA" class="arcade-eta" hidden></span><span class="arcade-power-note">Three arcade sprint boosts per shift</span></div><div id="arcadePop" class="arcade-pop" role="status" hidden></div><div id="shiftAlert" class="floor-alert" aria-live="polite"></div><div class="floor-layout"><div class="floor-play"><div class="floor-viewport"><canvas id="shiftFloorCanvas" tabindex="0" role="img" aria-label="Walkable twelve-room ICU floor. Tap to walk or use arrows or W A S D. Use the room and destination buttons for accessible navigation." aria-describedby="floorMovementHint"></canvas><span class="floor-map-caption">${p.name.toUpperCase()} / ROOMS 01–12</span><span id="floorPauseCover" class="floor-paused" hidden>PAUSED</span></div><div class="floor-controls"><div class="floor-pad" aria-label="Nurse movement"><button data-floor-dir="up" aria-label="Walk up">▲</button><button data-floor-dir="left" aria-label="Walk left">◀</button><button data-floor-dir="down" aria-label="Walk down">▼</button><button data-floor-dir="right" aria-label="Walk right">▶</button></div><div class="floor-interact-wrap"><button id="shiftInteract" class="primary" data-shift="interact">Walk toward a bedside or computer</button><span id="floorMovementHint">Tap to walk · arrows / WASD · E or space to interact</span></div></div><p id="shiftFeedback" class="floor-feedback" role="status" aria-live="polite">${esc(shift.feedback)}</p><div class="floor-cart"><b>GRAY BIN</b><span id="shiftInventory"></span>${button('export', 'Export journal', '', 'quiet')}<span id="shiftSaveStatus"></span></div></div><aside class="floor-board"><div class="floor-board-heading"><h2>Your assignment</h2><span id="shiftProgress"></span></div><div id="shiftPatients"></div><div id="shiftAdmission"></div><details class="floor-explainer"><summary>Clinical worklist / due care</summary><div id="shiftDue"></div></details><p class="helper">Urgent calls are available from your radio. Patient checks happen at the bedside; charts and notes are at computers.</p></aside></div></section>`;
     canvas = document.getElementById('shiftFloorCanvas');
     canvas.addEventListener('click', mapClick, {signal});
     previous = performance.now(); lastHud = 0; clockBudget = 0;
@@ -97,7 +99,7 @@ export function createShiftGame({app, onExit}) {
     if (!force && performance.now() - lastControls < 120) return;
     lastControls = performance.now();
     document.getElementById('shiftClock').textContent = clockAt(shift.elapsed);
-    updateReadingStatus();
+    updateReadingStatus(); arcadeHUD();
     const pauseButton = document.getElementById('shiftPause'); pauseButton.textContent = shift.paused ? 'Resume clock' : 'Pause'; pauseButton.setAttribute('aria-pressed', String(shift.paused));
     document.getElementById('floorPauseCover').hidden = !shift.paused;
     const near = nearestTarget(shift), interact = document.getElementById('shiftInteract');
@@ -128,6 +130,7 @@ export function createShiftGame({app, onExit}) {
         const p = patientAt(shift, el.dataset.liveVitals); if (p) setHTML(el, vitalHTML(p));
       });
       setHTML(document.getElementById('shiftModalUnitAlert'), alertHTML + (a?.announced && !a.accepted ? `<div>Charge: admission report for room ${a.room} is available at the station.</div>` : ''));
+      if(currentView?.kind==='arcade-pyxis'&&currentView.pharmacyState!==(shift.arcade.pharmacy?.state||'none'))arcadePyxis('Pharmacy update: your pickup drawer is ready.');
       if (currentView?.tab === 'labs') {
         const p = patientAt(shift, currentView.room), el = dialog.querySelector('[data-lab-status]');
         if (p && el) el.textContent = labStatus(p);
@@ -135,7 +138,7 @@ export function createShiftGame({app, onExit}) {
     }
   }
   function supplyName(id) {
-    return SUPPLIES.find(s => s.id === id)?.name || Object.values(PROCEDURES).find(p => p.item === id)?.name || id;
+    return ({'iv-kit':'Peripheral IV kit',flush:'Patient-labelled saline flush','purge-bag':'Pharmacy-labelled purge bag'})[id] || SUPPLIES.find(s => s.id === id)?.name || Object.values(PROCEDURES).find(p => p.item === id)?.name || id;
   }
   function goTo(kind, room, shouldOpen = true, tab = null) {
     if (!shift || shift.ended) return;
@@ -156,25 +159,28 @@ export function createShiftGame({app, onExit}) {
     const near = target || nearestTarget(shift);
     if (!near) {feedback('Walk closer to a highlighted bedside, room computer, charge nurse or supply area.'); return;}
     stopWalking();
-    if (near.kind === 'station' || near.kind === 'charge') station(near.kind);
-    if (near.kind === 'supply') supplies();
+    if (near.kind === 'station' || near.kind === 'charge') arcadeStation(near.kind);
+    if (near.kind === 'supply') arcadeSupply();
+    if (near.kind === 'pyxis') arcadePyxis();
     if (near.kind === 'admission') admission();
-    if (near.kind === 'bed') patientWorkspace(near.room, 'bed', near.tab || 'assessment');
-    if (near.kind === 'computer') patientWorkspace(near.room, 'computer', near.tab || 'orders');
+    if (near.kind === 'bed') near.tab ? patientWorkspace(near.room,'bed',near.tab) : arcadeBed(near.room);
+    if (near.kind === 'computer') near.tab ? patientWorkspace(near.room,'computer',near.tab) : arcadeComputer(near.room);
   }
   function tick(ts) {
     if (destroyed || !canvas) return;
-    const dt = Math.max(0, Math.min((ts - previous) / 1000, 0.05)); previous = ts;
+    const realDt = Math.max(0, Math.min((ts - previous) / 1000, 2)); const dt=Math.min(realDt,0.25); previous = ts;
+    const speed=shift.arcade?.boostLeft>0?1.75:1;
+    const stepMove=(dx,dy,budget=dt)=>{for(let left=budget;left>0.0001;){const step=Math.min(left,0.025);moveNurse(shift.player,dx,dy,step,speed);left-=step;}};
     const anyDialog = !!document.querySelector('dialog[open]');
     if (anyDialog) release();
     if (!shift.paused && !shift.ended && !anyDialog && !document.hidden) {
       const held = new Set([...keys, ...pointerDirections.values()]);
       let dx = Number(held.has('right')) - Number(held.has('left')), dy = Number(held.has('down')) - Number(held.has('up'));
-      if (dx || dy) {path = []; destination = null; autoInteract = false; moveNurse(shift.player, dx, dy, dt);}
+      if (dx || dy) {path = []; destination = null; autoInteract = false; stepMove(dx,dy);}
       else if (path.length) {
         const point = path[0], distance = Math.hypot(point.x - shift.player.x, point.y - shift.player.y);
         if (distance < 6) {shift.player.x = point.x; shift.player.y = point.y; path.shift();}
-        else moveNurse(shift.player, point.x - shift.player.x, point.y - shift.player.y, Math.min(dt, distance / 235));
+        else stepMove(point.x-shift.player.x,point.y-shift.player.y,Math.min(dt,distance/(235*speed)));
         if (!path.length && autoInteract && destination) {
           const target = destination; destination = null; autoInteract = false;
           if (Math.hypot(target.x - shift.player.x, target.y - shift.player.y) <= 82) interact(target);
@@ -183,7 +189,7 @@ export function createShiftGame({app, onExit}) {
     }
     const readingPause = anyDialog && shift.mode === 'coached' || currentView?.kind === 'procedure';
     if (!shift.paused && !shift.ended && !document.hidden && !readingPause) {
-      clockBudget += dt;
+      clockBudget += realDt;
       if (clockBudget >= 1) {advanceShift(shift, clockBudget * SIM_MINUTES_PER_SECOND); clockBudget = 0;}
     }
     if (currentView?.kind === 'procedure' && currentView.deadline) {
@@ -192,9 +198,76 @@ export function createShiftGame({app, onExit}) {
       if (timer) timer.textContent = left ? `${left}s · optional practice timer` : 'Timer finished · keep checking carefully';
       if (!left) currentView.timedOut = true;
     }
+    if(!readingPause&&!document.hidden)updateArcade(shift,realDt);
     camera = drawFloor(canvas, shift, path, ts); updateHud();
     if (ts - lastSave > 5000) {save(); lastSave = ts;}
     frame = requestAnimationFrame(tick);
+  }
+
+  function arcadeResult(r, renderAgain = null) {
+    feedback(r.text);save();updateHud(true);
+    const pop=document.getElementById('arcadePop');
+    if(pop){pop.textContent=r.points?`+${r.points}  ${r.text}`:r.text;pop.className=`arcade-pop ${r.ok?'win':'try-again'}`;pop.hidden=false;clearTimeout(pop._timer);pop._timer=setTimeout(()=>{pop.hidden=true;},3500);}
+    if(renderAgain)renderAgain(r.text);
+    if(r.points){const box=document.getElementById('shiftModalResponse');if(box){box.textContent=`+${r.points} QUEST POINTS · ${r.text}`;box.classList.add('arcade-win');box.hidden=false;}}
+  }
+  function arcadeHUD(){
+    if(!shift?.arcade||!canvas)return;
+    const a=ensureArcade(shift),m=missionFor(shift),host=document.getElementById('arcadeMission');
+    a.focus={kind:m.kind,room:m.room};
+    const html=`<div class="arcade-mission-copy"><span class="arcade-kicker">YOUR NEXT MOVE</span><h2>${esc(m.title)}</h2><p>${esc(m.hint)}</p></div>${button('mission',m.label,'','primary')}<div class="arcade-score"><b>${a.score}</b><span>QUEST POINTS</span></div>`;
+    if(host&&host.innerHTML!==html)host.innerHTML=html;
+    const phone=document.getElementById('arcadePhone');
+    if(phone){const ringing=shift.admission?.announced&&!shift.admission.accepted&&!a.phoneAnswered;phone.classList.toggle('ringing',!!ringing);phone.textContent=ringing?'☎ iMobile · INCOMING!':a.pharmacy?.state==='ready'?'☎ Pharmacy · READY':'☎ iMobile';}
+    const boost=document.getElementById('arcadeBoost');
+    if(boost){boost.textContent=a.boostLeft>0?`⚡ CELSIUS ${Math.ceil(a.boostLeft)}s`:`⚡ Celsius ×${a.boosts}`;boost.disabled=shift.ended||a.boosts===0&&a.boostLeft===0;}
+    const eta=document.getElementById('arcadeETA');
+    if(eta){eta.textContent=shift.admission?.reportRead&&!shift.admission.accepted?(a.transportHeld?'Transport holding safely':`Admission ETA ${clockAt(a.arrivalAt||shift.elapsed+30)} · ${Math.max(0,Math.ceil((a.arrivalAt||shift.elapsed)-shift.elapsed))} shift min`):'';eta.hidden=!eta.textContent;}
+  }
+  function followMission(){
+    const m=missionFor(shift);
+    if(m.kind==='radio'){arcadeResult(performCare(shift,m.room,'notify'));goTo('bed',m.room);return;}
+    if(m.kind==='phone')return arcadePhone();
+    goTo(m.kind,m.room);
+  }
+  function arcadePhone(message=''){
+    const a=ensureArcade(shift),incoming=shift.admission,ringing=incoming?.announced&&!incoming.accepted;
+    modal(`<p class="eyebrow">☎ iMOBILE</p><h2>${ringing?'Charge is calling.':'Your shift hotline.'}</h2>${responseBox(message)}${ringing?`<div class="arcade-quote">“Got a patient for you. You get the room; we get the wheels.”</div>${incoming.reportRead?`<h3>Room ${incoming.room} · ${esc(ADMISSIONS[shift.pod].name)}</h3><p>${esc(ADMISSIONS[shift.pod].brief)}</p><p class="arcade-ticket">ETA ${clockAt(a.arrivalAt||shift.elapsed+30)}${a.transportHeld?' · Transport holding':''}</p>${button('go-admission','Take me to the receiving room →','','primary')}`:button('answer-phone','Answer + reveal receiving ticket','','primary')}`:'<p>No new admission report. Keep moving; charge will ring you.</p>'}${a.pharmacy?`<div class="floor-callout"><b>Pharmacy</b><p>${a.pharmacy.state==='requested'?`Preparing your purge · ETA ${clockAt(a.pharmacy.readyAt)}`:a.pharmacy.state==='ready'?'Purge bag ready in the Pyxis pickup drawer.':'Purge order collected / handed off.'}</p></div>`:''}${button('close','Back to the floor','','quiet')}`,{kind:'phone'});
+  }
+  function arcadeStation(kind='station',message=''){
+    const a=ensureArcade(shift);
+    modal(`<p class="eyebrow">${kind==='charge'?'CHARGE NURSE':'NURSING STATION'}</p><h2>“You’ve got this. Start here.”</h2>${responseBox(message)}<div class="arcade-report-grid">${shift.patients.map(p=>`<article class="arcade-ticket"><span>ROOM ${p.room}</span><h3>${esc(profileOf(p).label)}</h3><p>${esc(profileOf(p).report)}</p><div class="buttons">${button('quick-report',p.reportRead?'Report received ✓':'Hear the short report',`data-room="${p.room}"`,p.reportRead?'secondary':'primary')}${button('chart-open','Full chart',`data-room="${p.room}"`)}${button('go-bed','Go meet your patient →',`data-room="${p.room}"`,'quiet')}</div></article>`).join('')}</div><div class="buttons">${button('mission','Follow my next objective →','','primary')}${button('practice-aline','A-line challenge')}${button('legacy-station','Detailed report / equipment practice','','quiet')}</div><p class="helper">Quest points reward completed game tasks. They are not a clinical grade.</p>`,{kind:'arcade-station'});
+  }
+  function arcadeBed(room,message=''){
+    const p=patientAt(shift,room);if(!p)return;
+    const responseReady=p.assessedChange&&p.checkedChange&&p.ordersRead&&(!profileOf(p).tof||p.medChecked&&p.tofBaseline);
+    const a=ensureArcade(shift),m=profileOf(p),{phase,cards}=bedsideClues(shift,p),seen=a.clues[`${room}:${phase}`]||[],iv=a.iv?.room===room&&(a.iv.state!=='done'||a.iv.choice==='labs'&&!a.iv.labsDone)?a.iv:null;
+    modal(`<p class="eyebrow">ROOM ${room} / ${p.stage==='changed'?'ALARM!':'BEDSIDE QUEST'}</p><h2>${p.stage==='treated'?'Did the response work?':p.stage==='changed'?'Something changed. Find the clues.':'Three clues. One clearer picture.'}</h2><div class="floor-vitals" data-live-vitals="${room}">${vitalHTML(p)}</div>${responseBox(message)}<div class="arcade-clues">${cards.map(c=>`<button class="arcade-clue ${seen.includes(c.id)?'found':''}" data-shift="reveal-clue" data-room="${room}" data-clue="${c.id}"><span>${seen.includes(c.id)?'✓':c.icon}</span><b>${c.title}</b><small>${seen.includes(c.id)?esc(c.text):'Tap to investigate'}</small></button>`).join('')}</div>${p.eventFired&&!p.reassessed?`<div class="arcade-alarm"><b>${esc(m.event)}</b>${button('radio',p.notified?'Team contacted ✓':'Call the clinical team NOW',`data-room="${room}"`,'primary')}</div>${p.planDone?`<p class="arcade-ticket">Response underway. Recheck at ${clockAt(p.followupAt)}. The follow-up does not happen instantly.</p>`:`<h3>${responseReady?'What fits the clues?':'Unlock your response'}</h3>${responseReady?'':'<p class="helper">Find all three current clues and verify active orders. Complete any ordered TOF readiness check below. The urgent call is available now.</p>'}<div class="arcade-response-choices">${m.choices.map(([id,text])=>button('arcade-respond',esc(text),`data-room="${room}" data-choice="${id}" ${responseReady?'':'disabled'}`)).join('')}</div>`}`:''}${iv?`<section class="arcade-ticket"><h3>⌁ ${iv.state==='done'?'IV restored. Ordered labs remain.':'The peripheral IV is out.'}</h3><p>${iv.assessed?'Small ooze controlled. Critical infusion access is intact. Due labs + replacement PIV are on this case ticket.':`${esc(iv.cause||'A peripheral IV has come out.')} Check local bleeding and remaining access before running for supplies.`}</p>${!iv.assessed?button('assess-iv','Check patient + access',`data-room="${room}"`,'primary'):`<div class="buttons">${!iv.choice?button('access-plan','Replace the PIV','data-choice="iv"','primary')+button('access-plan','Due labs first','data-choice="labs"'):iv.state!=='done'?button('iv-open','Start ultrasound IV puzzle','','primary'):''}${iv.choice==='labs'&&!iv.labsDone?button('iv-labs','Collect the due ordered labs',`data-room="${room}"`):''}</div>`}</section>`:''}${m.tof?tofForm(p,m):''}${a.pharmacy?.room===room&&a.pharmacy.state==='collected'?button('purge-deliver','Hand verified bag to device team',`data-room="${room}"`,'primary'):''}<div class="buttons">${button('go-computer','Room computer →',`data-room="${room}"`)}${button('full-bed','Detailed bedside / care',`data-room="${room}"`,'quiet')}${button('close','Back to the floor','','quiet')}</div>`,{kind:'arcade-bed',room});
+  }
+  function arcadeComputer(room,message=''){
+    const p=patientAt(shift,room);if(!p)return;const m=profileOf(p);
+    modal(`<p class="eyebrow">ROOM ${room} / COMPUTER</p><h2>Check the plan. Keep the pace.</h2><p class="arcade-patient-id">${esc(identityFor(shift,room))}</p>${responseBox(message)}<div class="arcade-ticket"><span>ACTIVE CASE ORDERS</span><p>${esc(m.orders)}</p>${button('quick-orders',p.ordersRead?'Orders matched ✓':'Match active orders',`data-room="${room}"`,'primary')}</div><h3>MAR / pump check</h3><p>Match this patient, allergy, active order, medication, concentration, route, line and pump.</p><div class="arcade-response-choices">${m.med.choices.map(([id,text])=>button('quick-meds',esc(text),`data-room="${room}" data-choice="${id}"`)).join('')}</div>${p.medChecked?'<p class="arcade-ticket">✓ Active MAR / pump check completed.</p>':''}<div class="buttons">${button('chart-open','Open full chart',`data-room="${room}"`)}${button('open-sbar','SBAR / notes',`data-room="${room}"`)}${button('go-bed','Back to bedside →',`data-room="${room}"`,'quiet')}</div>`,{kind:'arcade-computer',room});
+  }
+  function binHTML(){
+    const items=Object.entries(shift.inventory).filter(([,n])=>n>0),slots=items.flatMap(([id,n])=>Array.from({length:n},()=>id));
+    return `<section class="arcade-bin"><div><b>YOUR GRAY BIN</b><span>${slots.length}/8 slots</span></div><div class="arcade-bin-slots">${Array.from({length:8},(_,i)=>`<span class="${slots[i]?'filled':''}" title="${slots[i]?esc(supplyName(slots[i])):'Empty slot'}">${slots[i]?slots[i]==='iv-kit'?'⌁':slots[i]==='flush'?'▰':slots[i]==='purge-bag'?'⚕':'▣':'·'}</span>`).join('')}</div>${items.map(([id,n])=>`<div class="arcade-bin-item"><b>${esc(supplyName(id))} ×${n}</b>${button('bin-return','−',`data-item="${id}" aria-label="Return one ${esc(supplyName(id))}"`,'quiet')}</div>`).join('')||'<p>Pick something from the shelves. Watch it land here.</p>'}</section>`;
+  }
+  function arcadeSupply(message=''){
+    const a=shift.admission,info=ADMISSIONS[shift.pod],needed=a?.reportRead&&!a.accepted?[...info.items,...(info.procedure?[PROCEDURES[info.procedure].item]:[])].filter(id=>!a.installed[id]):[];
+    const iv=shift.arcade.iv;if(iv&&iv.state!=='done'&&iv.assessed)needed.push(iv.choice==='labs'&&!iv.labsDone?'labs':'iv-kit');
+    modal(`<p class="eyebrow">SUPPLY ROOM / BEHIND THE STATION</p><h2>Grab it. Bin it. Go.</h2>${responseBox(message)}<div class="arcade-shop-layout"><div><div class="arcade-shelf">${[...SUPPLIES,{id:'iv-kit',name:'Peripheral IV kit',detail:'Catheter, tourniquet, antiseptic, extension and dressing.'}].map(s=>`<button class="arcade-stock ${needed.includes(s.id)?'needed':''}" data-shift="bin-add" data-item="${s.id}"><span>${s.id==='iv-kit'?'⌁':s.id==='pump'?'♟':s.id==='labs'?'⚗':'▣'}</span><b>${esc(s.name)}</b><small>${needed.includes(s.id)?'ON YOUR ROOM TICKET':'Tap to add to bin'}</small></button>`).join('')}</div><div class="buttons">${button('pyxis-open','Pyxis / pharmacy pickup →','','primary')}${button('aline-open','Build A-line setup')}${button('procedure','CVC assistance tray','data-procedure="cvc"')}${button('close','Take my bin to the floor →','','quiet')}</div></div>${binHTML()}</div>`,{kind:'arcade-supply'});
+  }
+  function arcadePyxis(message=''){
+    const a=ensureArcade(shift),iv=a.iv,purge=a.pharmacy,imp=shift.patients.find(p=>profileOf(p).icon==='impella');
+    modal(`<p class="eyebrow">PYXIS / FICTIONAL MEDICATION PICKUP</p><h2>Right patient. Right label. Drawer opens.</h2>${responseBox(message)}${iv?.assessed&&iv.state!=='done'?`<section class="arcade-ticket"><span>ACTIVE PIV ORDER · ROOM ${iv.room}</span><h3>0.9% sodium chloride flush</h3><p class="arcade-patient-id">${esc(identityFor(shift,iv.room))}</p><p>Pick the intact, patient-labelled prefilled syringe for this case’s PIV patency check. Volume / use follow the prescribed check; no medication bolus is ordered.</p><div class="arcade-response-choices">${button('pyxis-flush',`${esc(identityFor(shift,iv.room))} · ordered flush · intact label`,'data-choice="matched"','primary')}${button('pyxis-flush','Another patient’s syringe','data-choice="wrong-patient"')}${button('pyxis-flush','Different solution / missing label','data-choice="wrong-label"')}</div></section>`:'<p class="helper">No active peripheral-flush pickup ticket.</p>'}${imp?`<section class="arcade-ticket"><span>DEVICE-TEAM ORDER ADDENDUM · ROOM ${imp.room}</span><h3>Pharmacy-prepared Impella purge</h3><p class="arcade-patient-id">${esc(identityFor(shift,imp.room))}</p><p>This side quest adds a confirmed heparin contraindication. Order: sodium bicarbonate 25 mEq/L in D5W, total 500 mL (12.5 mEq total), purge route. Pharmacy compounds it; the trained device team manages connection.</p>${!purge?button('purge-request','Request from pharmacy →','','primary'):purge.state==='requested'?`<div class="arcade-queue"><span class="arcade-spinner">◷</span><b>PHARMACY IS PREPARING IT</b><small>ETA ${clockAt(purge.readyAt)}. Keep working; your phone will update.</small></div>`:purge.state==='ready'?`<h3>Pickup drawer · choose the matching bag</h3><div class="arcade-response-choices">${button('purge-pick',`${esc(identityFor(shift,imp.room))} · 25 mEq/L · D5W · 500 mL · PURGE`,'data-choice="matched"','primary')}${button('purge-pick','25 mEq in 500 mL · D5W','data-choice="wrong-strength"')}${button('purge-pick','25 mEq/L · saline · systemic IV','data-choice="wrong-route"')}</div>`:`<p>✓ ${purge.state==='delivered'?'Verified bag handed to device team.':'Verified bag in your bin. Deliver it to the bedside.'}</p>`}</section>`:''}<div class="buttons">${button('shelf-open','Back to supply shelves')}${button('close','Back to the floor →','','quiet')}</div>${binHTML()}`,{kind:'arcade-pyxis',pharmacyState:purge?.state||'none'});
+  }
+  function arcadeIV(message=''){
+    const a=ensureArcade(shift),v=a.iv?.scan;if(!v)return arcadeBed(a.iv?.room);
+    modal(`<p class="eyebrow">ULTRASOUND IV / PHANTOM SPATIAL PUZZLE</p><h2>${v.tip===4?'Finish the line checks.':'Find the vessel. Keep the tip.'}</h2>${responseBox(message)}<div class="arcade-ultrasound ${v.compressed?'compressed':''}"><span class="arcade-scan-label">SCHEMATIC · NOT A CLINICAL IMAGE</span><svg class="arcade-needle-image ${v.visible?'visible':'lost'}" viewBox="0 0 1000 250" preserveAspectRatio="none" role="img" aria-label="Schematic needle tip ${v.visible?'visible':'out of view'}"><line x1="100" y1="55" x2="${100+v.tip*125}" y2="${55+v.tip*22.5}"/><circle cx="${100+v.tip*125}" cy="${55+v.tip*22.5}" r="8"/></svg>${['A','B','C'].map((id,i)=>`<button class="arcade-vessel vessel-${id} ${v.vessel===id?'selected':''}" data-shift="iv-step" data-step="vessel" data-value="${id}" aria-label="Select structure ${id}">${id}</button>`).join('')}<span class="arcade-scan-caption">${v.compressed?'A: remains pulsatile · B: collapses · C: nonvascular pattern':'Use compression to reveal a clue'}</span></div><div class="arcade-puzzle-progress">${[1,2,3,4].map(n=>`<span class="${v.tip>=n?'done':''}">${v.tip>=n?'✓':n}</span>`).join('')}<b>${v.visible?'TIP VISIBLE':'TIP OUT OF VIEW — DO NOT ADVANCE'}</b></div><div class="buttons">${button('iv-step','Compress / inspect','data-step="compress"')}${button('iv-step','Sweep probe · find tip','data-step="track"')}${button('iv-step','Advance one step →','data-step="advance"','primary')}</div>${v.tip===4?`<div class="arcade-check-buttons">${[['site','Site: no pain / swelling'],['patency','Patency checked per order'],['secure','Dressing + securement']].map(([id,text])=>button('iv-step',`${v.checks.includes(id)?'✓ ':''}${text}`,`data-step="check" data-value="${id}"`)).join('')}</div>${button('iv-step','Complete the IV challenge','data-step="finish"','primary')}`:''}<p class="helper">This abstract puzzle teaches image / tip checks. Real cannulation requires training, asepsis, the full procedure and supervised competence.</p>${button('close','Return to floor','','quiet')}`,{kind:'arcade-iv'});
+  }
+  function arcadeALine(message=''){
+    const v=ensureArcade(shift).aline;if(!v)return;
+    modal(`<p class="eyebrow">A-LINE / BUILD THE WAVEFORM</p><h2>${v.zeroed?'That’s a beautiful waveform.':'Make the setup work.'}</h2>${responseBox(message)}<div class="arcade-circuit"><div class="arcade-component-row">${ALINE_PARTS.map(([id,name,icon])=>`<button class="arcade-part ${v.parts.includes(id)?'connected':''}" data-shift="aline-step" data-step="part" data-value="${id}"><b>${icon}</b><span>${name}</span>${v.parts.includes(id)?'<i>✓ connected</i>':''}</button>`).join('')}</div><div class="arcade-tubing ${v.primed?'primed':''}"><span>${v.primed?'PRESCRIBED SALINE → CLOSED TRAINING CIRCUIT':'ASSEMBLE FIRST · PRIME OFF THE PATIENT'}</span>${v.primed?v.bubbles.map((id,i)=>button('aline-step','○',`data-step="bubble" data-value="${id}" aria-label="Clear air pocket ${id}" style="left:${25+i*25}%"`,'arcade-bubble')).join(''):''}</div></div><div class="buttons">${button('aline-step','Prime disconnected setup','data-step="prime"','primary')}</div><div class="arcade-pressure"><b>${v.pressure||0}<small>mmHg · this setup target: 300</small></b><div><span style="width:${(v.pressure||0)/3}%"></span></div>${button('aline-step','Pump pressure bag +100','data-step="pump"')}</div><div class="arcade-level"><div class="arcade-ra">RIGHT-ATRIAL REFERENCE</div><div class="arcade-transducer" style="top:${100-v.level}%">▥ TRANSDUCER</div></div><label class="arcade-slider">Move transducer to reference level<input id="arcadeLevel" type="range" min="0" max="100" value="${v.level}" aria-label="Transducer reference level"></label><div class="buttons">${button('aline-step','Zero to atmosphere · restore closed state','data-step="zero"')}${button('aline-step',v.practice?'Complete setup practice':'Pack prepared tray','data-step="finish"','primary')}</div>${v.zeroed?'<div class="arcade-wave"><svg viewBox="0 0 500 70" role="img" aria-label="Schematic arterial waveform unlocked"><path d="M0 55 L30 55 L40 6 L51 30 L60 26 L75 40 L90 48 L130 55 L145 55 L155 6 L166 30 L175 26 L190 40 L205 48 L245 55 L260 55 L270 6 L281 30 L290 26 L305 40 L320 48 L360 55 L375 55 L385 6 L396 30 L405 26 L420 40 L435 48 L500 55"/></svg></div>':''}<details class="floor-explainer"><summary>Setup clue / scope</summary><p>Use the case-prescribed solution, pressure system and actual IFU. Prime away from the patient, remove air, level and zero, then restore the prescribed closed state. The credentialed operator inserts the catheter. Assess site and distal perfusion afterward. This is an abstract setup puzzle, not an insertion or full monitor-use protocol.</p></details>${button('shelf-open','Back to supply shelves','','quiet')}`,{kind:'arcade-aline'});
   }
 
   function station(kind = 'station', message = '') {
@@ -255,7 +328,7 @@ export function createShiftGame({app, onExit}) {
   }
   function debrief() {
     const summary = shiftSummary(shift);
-    modal(`<p class="eyebrow">${FLOOR_PODS[shift.pod].name} / SHIFT DEBRIEF</p><h2>The work between the alarms.</h2><p>${clockAt(shift.elapsed)} · ${shift.endedEarly ? 'Practice ended early' : 'Scheduled handoff'} · assignment seed ${shift.seed}</p><div class="floor-debrief-stats"><div><b>${summary.reassessed}/${shift.patients.length}</b><span>changes reassessed</span></div><div><b>${summary.handoffs}/${shift.patients.length}</b><span>handoff fields reviewed</span></div><div><b>${summary.pending.length}</b><span>pending care tasks</span></div></div><p>${summary.missedWindows} overdue scheduling windows · ${summary.safetyStops} unsafe choices intercepted · ${summary.uncharted} uncharted observations. These are game feedback, not a validated competency grade or a mortality prediction.</p>${summary.admissionPending ? '<div class="floor-callout">The admission was not accepted. The receiving setup / handoff remains incomplete; transport retained care.</div>' : ''}${summary.unresolved.length ? `<div class="floor-callout urgent">Response reassessment remains incomplete in room(s) ${summary.unresolved.join(', ')}. Do not hand these off as resolved.</div>` : ''}<h3>Patients and continuing concerns</h3>${shift.patients.map(p => `<article class="floor-flow-entry"><h3>Room ${p.room} · ${esc(profileOf(p).label)}</h3><p>${esc(p.reassessed ? profileOf(p).afterExam : p.eventFired ? profileOf(p).changeExam : 'The later patient change was not reached during this practice segment.')}</p><p class="helper">${sourceLinks(profileOf(p))}</p></article>`).join('')}<details class="floor-explainer"><summary>Pending / overdue care (${summary.pending.length})</summary>${summary.pending.map(t => `<p>R${t.room} · ${esc(t.title)} · ${clockAt(t.due)}</p>`).join('')}</details><div class="buttons">${button('setup', 'Choose the next shift →', '', 'primary')}${button('export', 'Export journal')}${button('exit', 'Hospital', '', 'quiet')}</div>`, {kind: 'debrief'});
+    modal(`<p class="eyebrow">${FLOOR_PODS[shift.pod].name} / SHIFT DEBRIEF</p><h2>Your shift highlights.</h2><div class="arcade-finish"><b>${shift.arcade?.score||0}<small>QUEST POINTS</small></b><span>${shift.arcade?.done.length||0} completed objectives<br>Progress saved. Next shift, new surprises.</span></div>${summary.unresolved.length?`<p class="floor-response">Reassessment is still due in room(s) ${summary.unresolved.join(', ')}. Include that in handoff.</p>`:''}<p>${clockAt(shift.elapsed)} · ${shift.endedEarly ? 'Practice ended early' : 'Scheduled handoff'} · assignment seed ${shift.seed}</p><details class="floor-explainer"><summary>Clinical handoff / task review</summary><div class="floor-debrief-stats"><div><b>${summary.reassessed}/${shift.patients.length}</b><span>changes reassessed</span></div><div><b>${summary.handoffs}/${shift.patients.length}</b><span>handoff fields reviewed</span></div><div><b>${summary.pending.length}</b><span>pending care tasks</span></div></div><p>${summary.missedWindows} overdue scheduling windows · ${summary.safetyStops} unsafe choices intercepted · ${summary.uncharted} uncharted observations. These are game feedback, not a validated competency grade or a mortality prediction.</p>${summary.admissionPending ? '<div class="floor-callout">The admission was not accepted. The receiving setup / handoff remains incomplete; transport retained care.</div>' : ''}${summary.unresolved.length ? `<div class="floor-callout urgent">Response reassessment remains incomplete in room(s) ${summary.unresolved.join(', ')}. Do not hand these off as resolved.</div>` : ''}<h3>Patients and continuing concerns</h3>${shift.patients.map(p => `<article class="floor-flow-entry"><h3>Room ${p.room} · ${esc(profileOf(p).label)}</h3><p>${esc(p.reassessed ? profileOf(p).afterExam : p.eventFired ? profileOf(p).changeExam : 'The later patient change was not reached during this practice segment.')}</p><p class="helper">${sourceLinks(profileOf(p))}</p></article>`).join('')}<details class="floor-explainer"><summary>Pending / overdue care (${summary.pending.length})</summary>${summary.pending.map(t => `<p>R${t.room} · ${esc(t.title)} · ${clockAt(t.due)}</p>`).join('')}</details></details><div class="buttons">${button('setup', 'Choose the next shift →', '', 'primary')}${button('export', 'Export journal')}${button('exit', 'Hospital', '', 'quiet')}</div>`, {kind: 'debrief'});
   }
 
   function dictate(room, field) {
@@ -289,6 +362,33 @@ export function createShiftGame({app, onExit}) {
     if (action === 'history') {shift = vault.history[Number(b.dataset.index)]; if (shift) {shift = JSON.parse(JSON.stringify(shift)); shift.paused = true; mount();} return;}
     if (action === 'setup') {save(); setup(); return;}
     if (!shift) return;
+    if(action==='mission')return followMission();
+    if(action==='phone-open')return arcadePhone();
+    if(action==='answer-phone')return arcadeResult(answerPhone(shift),arcadePhone);
+    if(action==='boost'){const r=activateBoost(shift);if(r.ok)closeDialog();return arcadeResult(r);}
+    if(action==='quick-report'){const r=performCare(shift,room,'report');if(r.ok)Object.assign(r,award(shift,`report:${room}`,'REPORT LOCKED! Go meet your patient.',20));return arcadeResult(r,text=>arcadeStation('charge',text));}
+    if(action==='legacy-station')return station();
+    if(action==='quick-orders'){const r=performCare(shift,room,'orders');if(r.ok)Object.assign(r,award(shift,`orders:${room}`,'PLAN MATCHED! Now verify the MAR / pump.',20));return arcadeResult(r,text=>arcadeComputer(room,text));}
+    if(action==='quick-meds'){const r=performCare(shift,room,'meds',b.dataset.choice);if(r.ok)Object.assign(r,award(shift,`mar:${room}`,'MAR MATCH! Pump / order check complete.',25));updateArcade(shift);return arcadeResult(r,text=>arcadeComputer(room,text));}
+    if(action==='full-bed')return patientWorkspace(room,'bed','assessment');
+    if(action==='open-sbar')return patientWorkspace(room,'computer','notes');
+    if(action==='reveal-clue')return arcadeResult(revealClue(shift,room,b.dataset.clue),text=>arcadeBed(room,text));
+    if(action==='arcade-respond'){const r=performCare(shift,room,'respond',b.dataset.choice);if(r.ok)Object.assign(r,award(shift,`response:${room}`,`RESPONSE STARTED! Reassessment due ${clockAt(patientAt(shift,room).followupAt)}.`,35));return arcadeResult(r,text=>arcadeBed(room,text));}
+    if(action==='shelf-open')return arcadeSupply();
+    if(action==='pyxis-open')return arcadePyxis();
+    if(action==='bin-add')return arcadeResult(packOne(shift,b.dataset.item),arcadeSupply);
+    if(action==='bin-return'){const r=removeOne(shift,b.dataset.item);return arcadeResult(r,currentView?.kind==='arcade-pyxis'?arcadePyxis:arcadeSupply);}
+    if(action==='assess-iv')return arcadeResult(assessIV(shift),text=>arcadeBed(room,text));
+    if(action==='access-plan'){const r=chooseAccessPlan(shift,b.dataset.choice);return arcadeResult(r,text=>arcadeBed(shift.arcade.iv.room,text));}
+    if(action==='pyxis-flush')return arcadeResult(pickFlush(shift,b.dataset.choice),arcadePyxis);
+    if(action==='iv-open'){const r=startIV(shift);return arcadeResult(r,r.ok?arcadeIV:text=>arcadeBed(shift.arcade.iv.room,text));}
+    if(action==='iv-step'){const r=ivStep(shift,b.dataset.step,b.dataset.value);return arcadeResult(r,shift.arcade.iv.state==='done'?text=>arcadeBed(shift.arcade.iv.room,text):arcadeIV);}
+    if(action==='iv-labs'){const r=performCare(shift,room,'labs');if(r.ok){shift.arcade.iv.labsDone=true;Object.assign(r,award(shift,'iv-labs',shift.arcade.iv.state==='done'?'ORDERED SAMPLE SENT! Access ticket complete.':'ORDERED SAMPLE SENT! Replacement IV remains pending.',30));}return arcadeResult(r,text=>arcadeBed(room,text));}
+    if(action==='aline-open'||action==='practice-aline'){const r=startALine(shift,action==='practice-aline');return arcadeResult(r,arcadeALine);}
+    if(action==='aline-step'){const r=alineStep(shift,b.dataset.step,b.dataset.value);return arcadeResult(r,shift.arcade.aline.done?arcadeSupply:arcadeALine);}
+    if(action==='purge-request')return arcadeResult(requestPurge(shift),arcadePyxis);
+    if(action==='purge-pick')return arcadeResult(collectPurge(shift,b.dataset.choice),arcadePyxis);
+    if(action==='purge-deliver')return arcadeResult(deliverPurge(shift,room),text=>arcadeBed(room,text));
     if (action === 'go-station') return goTo('station');
     if (action === 'go-supply') return goTo('supply');
     if (action === 'go-charge') return goTo('charge');
@@ -314,13 +414,14 @@ export function createShiftGame({app, onExit}) {
     if (action === 'check-procedure') {
       const view = {...currentView}, picked = [...dialog.querySelectorAll('[name="floor-procedure"]:checked')].map(e => e.value);
       const result = checkProcedure(shift, view.procedure, picked, view);
-      showResult(result, text => result.ok ? (view.practice ? station('charge', text) : supplies(text)) : procedure(view.procedure, view.practice, text, picked, view)); return;
+      showResult(result, text => result.ok ? (view.practice ? arcadeStation('charge', text) : arcadeSupply(text)) : procedure(view.procedure, view.practice, text, picked, view)); return;
     }
     if (action === 'admission-report') return showResult(receiveAdmissionReport(shift), text => station('station', text));
-    if (action === 'install') return showResult(installAdmissionSupply(shift, b.dataset.item), admission);
+    if(action==='install'){const r=installAdmissionSupply(shift,b.dataset.item);if(r.ok)Object.assign(r,award(shift,`setup:${shift.admission.room}:${b.dataset.item}`,'ROOM UPGRADED! Equipment is now visible at the receiving bed.',20));return arcadeResult(r,admission);}
     if (action === 'accept') {
       const result = acceptAdmission(shift, [...dialog.querySelectorAll('[name="arrival-check"]:checked')].map(e => e.value));
-      return showResult(result, text => result.ok ? patientWorkspace(shift.admission.room, 'bed', 'assessment', text) : admission(text));
+      if(result.ok)Object.assign(result,award(shift,'admitted','PATIENT ARRIVED! Receiving room complete; establish your bedside baseline.',75));
+      return arcadeResult(result,text=>result.ok?arcadeBed(shift.admission.room,text):admission(text));
     }
     if (action === 'care' || action === 'respond' || action === 'meds' || action === 'urine' || action === 'hold-turn') {
       const care = action === 'care' ? b.dataset.care : action === 'meds' ? 'meds' : action === 'urine' ? 'round' : action === 'hold-turn' ? 'hold-turn' : 'respond';
@@ -339,6 +440,7 @@ export function createShiftGame({app, onExit}) {
     if (event.target.id === 'floorMode') mode = event.target.value;
   }, {signal});
   document.addEventListener('input', event => {
+    if(shift&&event.target.id==='arcadeLevel'){alineStep(shift,'level',event.target.value);const trans=dialog.querySelector('.arcade-transducer');if(trans)trans.style.top=`${100-Number(event.target.value)}%`;save();return;}
     if (!shift || !event.target.dataset.shiftNote) return;
     recordNote(shift, Number(event.target.dataset.room), event.target.dataset.shiftNote, event.target.value); save();
   }, {signal});
