@@ -1,4 +1,4 @@
-import {FLOOR_PODS, PATIENT_BY_ID} from './shift-data.js?v=0.4.0';
+import {FLOOR_PODS, PATIENT_BY_ID} from './shift-data.js?v=0.4.1';
 
 export const WORLD = {width: 1440, height: 900};
 const CELL = 20;
@@ -73,6 +73,20 @@ export function moveNurse(player, dx, dy, seconds, speed = 1) {
   const nx = player.x + dx / length * distance, ny = player.y + dy / length * distance;
   if (walkAllowed(nx, player.y)) player.x = nx;
   if (walkAllowed(player.x, ny)) player.y = ny;
+}
+// Consume the whole time budget across route points, including at low frame rates.
+export function followRoute(player, path, seconds, speed = 1) {
+  let left = Math.max(0, Math.min(Number(seconds) || 0, 2));
+  const rate = 235 * Math.max(1, Math.min(Number(speed) || 1, 2));
+  while (path.length && left > 0.00001) {
+    const point = path[0], dx = point.x - player.x, dy = point.y - player.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance < 0.001) {path.shift(); continue;}
+    const step = Math.min(left, 0.025, distance / rate), before = {x: player.x, y: player.y};
+    moveNurse(player, dx, dy, step, speed); left -= step;
+    if (Math.hypot(point.x - player.x, point.y - player.y) < 0.001) path.shift();
+    if (Math.hypot(player.x - before.x, player.y - before.y) < 0.00001) break;
+  }
 }
 export function interactionTargets(shift) {
   const targets = [

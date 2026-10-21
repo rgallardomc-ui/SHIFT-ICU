@@ -1,9 +1,9 @@
-import {FLOOR_PODS, SHIFT_LEVELS, SUPPLIES, PROCEDURES, ADMISSIONS, NOTE_FIELDS, DRUG_ROLES} from './shift-data.js?v=0.4.0';
-import {createShift, restoreShift, patientAt, profileOf, clockAt, openTasks, advanceShift, packSupplies, returnSupplies, checkProcedure, receiveAdmissionReport, installAdmissionSupply, acceptAdmission, recordNote, performCare, endShift, shiftSummary, exportShift, SIM_MINUTES_PER_SECOND} from './shift-engine.js?v=0.4.0';
-import {roomGeometry, routeBetween, moveNurse, nearestTarget, interactionTargets, drawFloor, walkAllowed} from './shift-map.js?v=0.4.0';
-import {CLINICAL_SOURCES} from './sources.js?v=0.4.0';
+import {FLOOR_PODS, SHIFT_LEVELS, SUPPLIES, PROCEDURES, ADMISSIONS, NOTE_FIELDS, DRUG_ROLES} from './shift-data.js?v=0.4.1';
+import {createShift, restoreShift, patientAt, profileOf, clockAt, openTasks, advanceShift, packSupplies, returnSupplies, checkProcedure, receiveAdmissionReport, installAdmissionSupply, acceptAdmission, recordNote, performCare, endShift, shiftSummary, exportShift, SIM_MINUTES_PER_SECOND} from './shift-engine.js?v=0.4.1';
+import {roomGeometry, routeBetween, moveNurse, followRoute, nearestTarget, interactionTargets, drawFloor, walkAllowed} from './shift-map.js?v=0.4.1';
+import {CLINICAL_SOURCES} from './sources.js?v=0.4.1';
 
-import {ensureArcade, award, activateBoost, updateArcade, answerPhone, bedsideClues, revealClue, packOne, removeOne, assessIV, chooseAccessPlan, pickFlush, startIV, ivStep, startALine, alineStep, requestPurge, collectPurge, deliverPurge, missionFor, ALINE_PARTS, identityFor} from './shift-arcade.js?v=0.4.0';
+import {ensureArcade, award, activateBoost, updateArcade, answerPhone, bedsideClues, revealClue, packOne, removeOne, assessIV, chooseAccessPlan, pickFlush, startIV, ivStep, startALine, alineStep, requestPurge, collectPurge, deliverPurge, missionFor, ALINE_PARTS, identityFor} from './shift-arcade.js?v=0.4.1';
 
 const STORE = 'shift-icu-floor-v3';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
@@ -168,7 +168,7 @@ export function createShiftGame({app, onExit}) {
   }
   function tick(ts) {
     if (destroyed || !canvas) return;
-    const realDt = Math.max(0, Math.min((ts - previous) / 1000, 2)); const dt=Math.min(realDt,0.25); previous = ts;
+    const realDt = Math.max(0, Math.min((ts - previous) / 1000, 2)); const dt=realDt; previous = ts;
     const speed=shift.arcade?.boostLeft>0?1.75:1;
     const stepMove=(dx,dy,budget=dt)=>{for(let left=budget;left>0.0001;){const step=Math.min(left,0.025);moveNurse(shift.player,dx,dy,step,speed);left-=step;}};
     const anyDialog = !!document.querySelector('dialog[open]');
@@ -178,9 +178,7 @@ export function createShiftGame({app, onExit}) {
       let dx = Number(held.has('right')) - Number(held.has('left')), dy = Number(held.has('down')) - Number(held.has('up'));
       if (dx || dy) {path = []; destination = null; autoInteract = false; stepMove(dx,dy);}
       else if (path.length) {
-        const point = path[0], distance = Math.hypot(point.x - shift.player.x, point.y - shift.player.y);
-        if (distance < 6) {shift.player.x = point.x; shift.player.y = point.y; path.shift();}
-        else stepMove(point.x-shift.player.x,point.y-shift.player.y,Math.min(dt,distance/(235*speed)));
+        followRoute(shift.player, path, dt, speed);
         if (!path.length && autoInteract && destination) {
           const target = destination; destination = null; autoInteract = false;
           if (Math.hypot(target.x - shift.player.x, target.y - shift.player.y) <= 82) interact(target);

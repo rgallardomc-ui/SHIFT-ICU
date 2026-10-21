@@ -1,7 +1,7 @@
-import {createShiftGame} from './shift-floor.js?v=0.4.0';
+import {createShiftGame} from './shift-floor.js?v=0.4.1';
 import {PODS,CASES,CASE_BY_ID} from './cases.js';
 import {deviceDisplay} from './device.js';
-import {CLINICAL_SOURCES} from './sources.js?v=0.4.0';
+import {CLINICAL_SOURCES} from './sources.js?v=0.4.1';
 import {newRun,time,observe,act,finish,metrics,remaining,noteCompleteness,albuminVolume} from './engine.js';
 
 const $=s=>document.querySelector(s);

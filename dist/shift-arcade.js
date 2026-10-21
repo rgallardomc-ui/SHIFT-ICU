@@ -1,5 +1,5 @@
-import {ADMISSIONS, PROCEDURES, SUPPLIES} from './shift-data.js?v=0.4.0';
-import {patientAt, profileOf, performCare, packSupplies, checkProcedure, receiveAdmissionReport, advanceShift, clockAt} from './shift-engine.js?v=0.4.0';
+import {ADMISSIONS, PROCEDURES, SUPPLIES} from './shift-data.js?v=0.4.1';
+import {patientAt, profileOf, performCare, packSupplies, checkProcedure, receiveAdmissionReport, advanceShift, clockAt} from './shift-engine.js?v=0.4.1';
 
 export const BIN_EXTRAS = [
   {id:'iv-kit',name:'Peripheral IV kit',icon:'⌁',detail:'Catheter, tourniquet, antiseptic, extension and dressing.'},
