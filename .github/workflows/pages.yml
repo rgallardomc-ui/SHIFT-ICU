@@ -20,7 +20,11 @@ jobs:
           node-version: '24'
           package-manager-cache: false
       - name: Check browser script syntax
-        run: node --check dist/app.js
+        run: |
+          for script in dist/*.js
+          do
+            node --check "$script"
+          done
       - name: Check scenario logic
         run: npm test
       - name: Configure Pages
