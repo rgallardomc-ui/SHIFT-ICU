@@ -2,10 +2,11 @@
 
 A retro nursing simulation created by **Rafael Gallardo, RN**.
 
-Start with one short, complete CABG rhythm-change shift. Move, interact, assess,
-coordinate the prescribed work, reassess and hand off. Standard-mapped gamepads
-and keyboard are the primary inputs. The existing twelve-room hospital, four
-pods, detailed cases and authored browser notes remain available separately.
+The primary experience is now **Pocket Bedside: Pressure Drop**, a phone-first
+portrait game with floating touch-drag movement and hands-on nursing mini-games.
+One older patient needs assessment, prescribed hemodynamic support and ordered
+A-line monitoring. The earlier hospital, focused cases and rhythm demo remain
+available under Other modes. Existing browser notes are preserved.
 
 ## Source and deployment status
 
@@ -20,7 +21,23 @@ GitHub is the source of truth. Retrieve current `main` and preserve the pending
 branch work before future edits. Pages deployments are manual; a source commit
 alone does not update the playable game.
 
-## Short shift — 0.5 source
+## Pocket Bedside — 0.6 candidate
+
+- One portrait viewport: patient, pump and tray stay close. Drag to move; release
+  to stop, or tap a station. No D-pad or required typing.
+- Touch patient assessment hotspots, match the prescribed bag, trace the systemic
+  IV, then assemble/prime/de-air/pressurize/level/zero the ordered monitoring setup.
+- A trained inserter places the catheter. Nurse checks waveform/site/distal
+  circulation and obtains the patient response. A-line setup does not treat shock.
+- Physical pieces rearrange on replay; the medical order does not randomize.
+- Installable home-screen manifest/app shell. In Safari, use Share → Add to Home
+  Screen; real-device installation/offline behavior remains separately testable.
+
+The current design target is the phone, replacing the earlier controller-first
+priority. See [the compact project record](docs/PROJECT_RECORD.md) for what is
+implemented, browser-tested and deployed.
+
+## Earlier controller prototype — 0.5
 
 Use **Play a short shift** on the home screen, or `/#quick` after deployment.
 The first slice adapts existing Delta `cabg-recovery`, with one compact ward and
@@ -123,7 +140,7 @@ No installation or build step is required. Use Node.js 22 or newer for tests:
 npm test
 ```
 
-The release has **107 passing automated checks**, including the prior focused
+The release has **134 passing automated checks**, including the prior focused
 cases, all floor response / handoff paths, specialty boundaries, randomized room
 assignments, admissions, supplies / procedure gates, recurring deadlines, specimen
 chronology, TOF readiness, persistence and walkable routes.
