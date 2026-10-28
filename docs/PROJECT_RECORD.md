@@ -1,14 +1,16 @@
 # SHIFT: ICU — phone-first pocket bedside
 
-By Rafael Gallardo, RN. Updated October28,2026.
+By Rafael Gallardo, RN. Updated October 28, 2026.
 
 ## Current iteration — physical A-line / v0.7.0
 
-**Implemented:** v0.7.0 on `physical-aline-v0.7`, based on freshly retrieved main `5181f92a5b6f1cdb700f58db11ebd357b30bc9fe`. Existing GitHub Pages remains the only hosting target. No Entropy Quest source, data or cache was accessed or changed.
+**Implemented and merged:** v0.7.0 through [PR #5](https://github.com/rgallardomc-ui/SHIFT-ICU/pull/5), merge/game commit `a36e40a507952081c48e885e046c78ce46b08cca`, based on freshly retrieved main `5181f92a5b6f1cdb700f58db11ebd357b30bc9fe`. Existing GitHub Pages remains the only hosting target. No Entropy Quest source, data or cache was accessed or changed.
 
 **Tested:** 142/142 Node checks and changed-browser-module syntax passed. Independent QA completed the 390×844 episode and replay, native fitting/trace/hold/bulb/level/dial gestures, saved progress and pause/resume. At 320×568 it tested all new setup phases through the stopcock, obtained recheck from monitor zoom with setup retention, and legacy hub/rhythm/pocket return. Both viewport client/scroll sizes match; tested targets are at least 44px. The integrator enlarged port labels to 11px and rechecked both viewport sizes after QA. See the detailed report for limits.
 
-**Deployed:** publication pending; v0.6 remains the last verified live build until this status is updated.
+**Deployed and verified:** [v0.7.0 phone entry](https://rgallardomc-ui.github.io/SHIFT-ICU/?v=0.7.0#pocket). [Pages run 40779362091](https://github.com/rgallardomc-ui/SHIFT-ICU/actions/runs/40779362091) prepared and deployed successfully, including 142 passing checks and all browser-script syntax checks. The tested local, uploaded branch and merged trees were identical (`4fca869590afb04d7b427b889f613a21777de25f`). All 34 tracked deployed game files matched the fixed game commit byte-for-byte. The local phone fixture was excluded.
+
+**Live smoke:** ordinary UI actions completed help, all initial bedside checks, prescription/premix/systemic-IV/locked-pump checks, support start, all four equipment fits and fluid-route tracing. The preline monitor showed ART unavailable and preserved setup on return. The due bedside recheck took primary-action priority; obtaining all four new findings changed the displayed last check from MAP 54/HR 118 to MAP 66/HR 106, retained prior-hour urine 18 mL, and preserved preparation at the off-patient priming phase. Vent-first gravity priming opened correctly; [live screenshot](team/physical-aline-live.jpg). This live smoke supplements the independent full episode on identical assets; it is not another complete live playthrough.
 
 ### What changed
 - The six matching-word docks are replaced by physical bag/sleeve/wrap, round fluid connector and keyed monitor cable pieces in one patient-left, pole-right workspace. Native drag and accessible tap alternatives share the same gated actions.
@@ -17,7 +19,7 @@ By Rafael Gallardo, RN. Updated October28,2026.
 - HELP, the assessment view, ongoing prescribed support, due recheck priority, old modes and save keys remain. Version-1 pocket saves migrate physical setup fields without deleting accepted progress. Added tests cover preparation/routing gates, partial flow, migration, honest observations and completion.
 
 ### Actual team and ownership
-Root owns design, equipment rendering/input, app/cache wiring, integration and publishing. Engine subagent owns `pocket-engine.js` and tests. Clinical subagent checked primary IFU/source material and actual implementation in [review](team/physical-aline-clinical.md). Independent QA owns [playtest report](team/physical-aline-playtest.md). These were real coordinated agents with disjoint file ownership.
+Root owns design, equipment rendering/input, app/cache wiring, integration and publishing. Engine subagent owns `pocket-engine.js` and tests. Clinical subagent checked primary IFU/source material and actual implementation in [review](team/physical-aline-clinical.md). Independent QA owns [playtest report](team/physical-aline-playtest.md). These were real coordinated agents with disjoint file ownership. All three review/build assignments are complete; no background agent work remains running.
 
 ### Scope and next milestone
 Keep the approved compact phone design. Clinical/source review is not facility, manufacturer or educator approval; finger comfort, human timing/enjoyment and actual Safari/PWA/offline behavior still need Rafael’s phone pass. After this loop earns approval, test changed bed/reference height and authored replay variations, then patient/access-site updates and coherent emergency access. IV practice, provider cannulation, neuro/EVD, new shock cases, pharmacy/calls, music and expanded hospital systems remain later roadmap items. No consent/documentation subsystem was added.
