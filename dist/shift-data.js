@@ -116,7 +116,7 @@ export const SHIFT_PATIENTS = [
     afterExam: 'Reassessment: HR 112, MAP 72, still irregular. The patient is more comfortable but the rhythm issue persists. Document the team plan, drain / urine trend and what remains due.',
     labs: [['K', '4.0', 'mmol/L', '3.5–5.0'], ['Mg', '1.9', 'mg/dL', '1.7–2.4'], ['Hgb', '9.8', 'g/dL', '12–17']],
     labAfter: 'Repeat K 3.6 mmol/L, Mg 1.7 mg/dL, Hgb 9.6 g/dL. Replacement, if prescribed, needs the actual drug / dose / route / timing checks.',
-    sources: ['aha-special']
+    sources: ['aha-rhythm','af-postop','aha-special']
   }),
   profile({
     id: 'impella-rounds', pod: 'delta', label: 'Cardiogenic shock · Impella CP', icon: 'impella',

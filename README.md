@@ -2,9 +2,10 @@
 
 A retro nursing simulation created by **Rafael Gallardo, RN**.
 
-Move your nurse around a twelve-room unit. Receive a generated assignment, obtain
-report, assess patients, check orders, gather supplies, prepare an admission,
-reassess changes, document and hand off unfinished concerns.
+Start with one short, complete CABG rhythm-change shift. Move, interact, assess,
+coordinate the prescribed work, reassess and hand off. Standard-mapped gamepads
+and keyboard are the primary inputs. The existing twelve-room hospital, four
+pods, detailed cases and authored browser notes remain available separately.
 
 ## Source and deployment status
 
@@ -18,6 +19,31 @@ reassess changes, document and hand off unfinished concerns.
 GitHub is the source of truth. Retrieve current `main` and preserve the pending
 branch work before future edits. Pages deployments are manual; a source commit
 alone does not update the playable game.
+
+## Short shift — 0.5 source
+
+Use **Play a short shift** on the home screen, or `/#quick` after deployment.
+The first slice adapts existing Delta `cabg-recovery`, with one compact ward and
+no admission / IV / pharmacy interruptions. The 3–5 minute label is a design
+target, not a validated session-length guarantee. No forced idle time is added.
+
+- Move with left stick / D-pad / arrows; interact with A / Cross / E / Enter.
+- Menus use directions and confirm. B / Circle / Escape goes back; Start / P pauses.
+- Follow objective offers guided walking. Either ECG or K/Mg coordination may come
+  first; both stay on the clinical plan. Urgent calls never wait for a checklist.
+- Clinical feedback keeps the still-irregular rhythm and pending review visible.
+  Success requires obtained reassessment and an honest handoff, not a high score.
+- Calm has no deadline. The optional practice clock stops for decisions / pause
+  and offers retry from the alarm. It predicts no patient outcome.
+- Replay keeps the same case and optionally flips the compact layout. No streak,
+  absence penalty or grinding. New progress uses `shift-icu-quick-v1`; older
+  `shift-icu-v1` and `shift-icu-floor-v3` data are retained.
+
+Physical controller compatibility remains unverified until Rafael supplies his
+controller model / OS / browser and tests it. Nonstandard remotes are not guessed.
+See [the compact project record](docs/PROJECT_RECORD.md) for verified versions,
+team owners, acceptance criteria, decisions, blockers and actual test evidence.
+Research / clinical review are linked from that record.
 
 ## Play-first shift layer — 0.4
 
@@ -97,7 +123,7 @@ No installation or build step is required. Use Node.js 22 or newer for tests:
 npm test
 ```
 
-The release has **86 passing automated checks**, including the prior focused
+The release has **107 passing automated checks**, including the prior focused
 cases, all floor response / handoff paths, specialty boundaries, randomized room
 assignments, admissions, supplies / procedure gates, recurring deadlines, specimen
 chronology, TOF readiness, persistence and walkable routes.

@@ -135,3 +135,20 @@ Reassessment still waits for the displayed case interval; immediate recovery or
 laboratory normalization is not invented. Admission ETAs never override receiving
 readiness. Local educator, device-team, medication and actual-phone review remain
 pending; source checks do not establish their approval.
+
+## October 28, 2026 — short CABG rhythm shift
+
+The bounded quick shift reuses `cabg-recovery` without importing a new medication
+regimen. A separate clinical-review subagent inspected the actual quick engine,
+UI text and tests; no blocking unsafe assertion was identified. This is
+source-informed design review, not educator / facility approval or validation.
+
+The sequence retains patient and signal assessment, ungated surgical-team calls,
+ordered 12-lead coordination and K/Mg request, explicit delayed reassessment and
+a still-irregular-rhythm handoff. K/Mg collection/results remain pending. The
+ECG goes for clinician interpretation. A call does not cure the rhythm. Practice
+time, a time jump and a compact ward simplify play; they predict no real task
+duration, treatment response or patient outcome. No points or speed grade replace
+clinical gates. See [the implementation review](docs/team/clinical-review.md) for
+exact evidence, scope and primary links: AHA 2025 Adult ALS / tachyarrhythmia
+algorithm and 2023 ACC/AHA/ACCP/HRS AF guideline sections 4.2.2 / 10.9.2.

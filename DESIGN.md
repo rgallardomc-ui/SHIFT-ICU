@@ -147,3 +147,23 @@ The tests cover clue / reassessment chronology, actual supply use, labs-versus-I
 branches, pharmacy queue / label / delivery states, setup pressure / air / level
 gates, duplicate reward prevention, deadline holds, saved notes and reachable
 geometry. Browser and actual iPhone checks remain distinct from engine tests.
+
+## 0.5 bounded controller-first shift
+
+`quick-engine.js` adapts the existing `cabg-recovery` clinical profile into one
+complete encounter, with serializable state separate from floor / focused cases.
+It owns clinical gates, a non-prognostic optional practice clock, explicit time
+jumps, actual reassessment, safe handoff and two compact route layouts. Geometry
+and movement are collision-tested; diagnostics retain pending collection/review.
+
+`quick-shift.js` draws one ward, owns shallow action panels and persistent result
+feedback, and restores primary focus after every panel render. Old modes stay in
+`app.js` / `shift-floor.js`. `controller-input.js` supplies a shared pure pad
+transition layer and browser adapter: standard mapping, deadzones, edge/repeat
+handling, scoped navigation, neutral reconnect and blur release. World movement
+uses collision substeps with a shared bounded frame budget.
+
+Only root integrates. The investigator independently playtests, a source-informed
+clinical agent reviews claims, and a separate gameplay researcher distinguishes
+source facts from adaptation choices. See `docs/PROJECT_RECORD.md`. Hardware
+compatibility and enjoyment are not inferred from Node checks.
