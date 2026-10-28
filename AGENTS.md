@@ -68,3 +68,23 @@ Keep it separate from `rgallardomc-ui/Entropy-Game`, which is a visual reference
   administer a drug or independently change purge / systemic anticoagulation.
 - Three Celsius charges are fictional movement boosts. They never change clinical
   timers, patient physiology or medication authority. Humor targets unit logistics.
+
+## Short-shift milestone / team integration
+
+- The primary entry is the bounded `cabg-recovery` quick shift. Make its core loop
+  understandable and enjoyable before adding cases or systems. Keep the existing
+  hospital and focused modes available, with their notes and saves intact.
+- Pure quick state / navigation geometry live in `quick-engine.js`; rendering in
+  `quick-shift.js` / `.css`; standard gamepad / keyboard focus in `controller-input.js`.
+  New progress uses `shift-icu-quick-v1`, independently of old save formats.
+- One integrator owns app wiring, acceptance and publication. Parallel agents own
+  disjoint files. Keep `docs/PROJECT_RECORD.md` current with implemented, tested
+  and deployed distinctions. No claim of running work between turns without a job.
+- Controller menus need visible focus, press-edge handling and focus recovery after
+  rerender. Preserve native typing / Tab and old hub input outside the quick scope.
+  Unknown remote mappings fail visibly; do not assume a TV remote is a gamepad.
+- The quick shift uses explicit diagnostic coordination, not invented K/Mg results;
+  ECG interpretation / treatment remain with the clinical team. A lower rate is
+  not a resolved rhythm. Reassessment and pending-plan handoff gate completion.
+- Do not pad playtime or add speed grades to meet the 3–5 minute target. Human fun,
+  timing and Rafael’s actual controller acceptance require hands-on feedback.
