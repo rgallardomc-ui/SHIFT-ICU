@@ -1,0 +1,6 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {POCKET_STATIONS,pocketCanWalk,pocketMove,pocketNear,pocketRoute} from '../dist/pocket-world.js';
+test('all bedside stations are close and reachable without walking through furniture',()=>{for(const from of [{x:185,y:325},...Object.values(POCKET_STATIONS)])for(const to of Object.values(POCKET_STATIONS)){const path=pocketRoute(from,to);assert.ok(path.length);for(const point of path)assert.ok(pocketCanWalk(point.x,point.y));assert.ok(pocketNear(path.at(-1),to));}assert.ok(Math.hypot(POCKET_STATIONS.patient.x-POCKET_STATIONS.pump.x,POCKET_STATIONS.patient.y-POCKET_STATIONS.pump.y)<170);});
+test('touch movement is frame-rate independent and never tunnels through a bed',()=>{const a={x:190,y:325},b={...a};pocketMove(a,1,0,.5);for(let i=0;i<30;i++)pocketMove(b,1,0,1/60);assert.ok(Math.hypot(a.x-b.x,a.y-b.y)<.01);const c={x:95,y:170};pocketMove(c,0,-1,1);assert.ok(c.y>=158);assert.ok(pocketCanWalk(c.x,c.y));});
+test('zero-vector release stops movement and route recovery handles furniture edges',()=>{const player={x:185,y:325},before={...player};pocketMove(player,0,0,1);assert.deepEqual(player,before);assert.ok(pocketRoute({x:158,y:120},POCKET_STATIONS.aline).length);});
