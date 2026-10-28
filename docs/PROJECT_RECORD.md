@@ -5,7 +5,12 @@ Created by Rafael Gallardo, RN. Updated October 28, 2026.
 ## Goal / definition of done
 One existing CABG rhythm-change scenario becomes a small complete 3–5 minute target experience: enter, assess, act, see response, adapt, hand off, replay. Simple controls, visible focus, shallow choices, immediate feedback, pause and quick retry. No mouse required for the supported controller core. Physical hardware acceptance requires Rafael’s controller/device test. Preserve the existing hospital, cases and notes; Entropy Quest is excluded.
 
-## Verified baseline
+## Verified current version
+**Deployed v0.5.0** — game commit `a8fbdebc9f07077d981b235e032bc89664912e6e`, merged in [PR3](https://github.com/rgallardomc-ui/SHIFT-ICU/pull/3). [Pages deployment6](https://github.com/rgallardomc-ui/SHIFT-ICU/actions/runs/40639838135) passed prepare and deploy. All23 served game assets match that commit byte for byte. [Start the short shift](https://rgallardomc-ui.github.io/SHIFT-ICU/#quick).
+
+Source is saved in GitHub. This record-only follow-up does not change the deployed game assets. Physical controller compatibility, enjoyment and target session length are still pending Rafael’s hands-on acceptance.
+
+## Verified starting baseline
 **Deployed:** v0.4.1, GitHub main `13a7af2ece0e79330ff7d3dab867b2a3d0ffb682`. Verified current main and live page on October 28. Canonical source: https://github.com/rgallardomc-ui/SHIFT-ICU . Play: https://rgallardomc-ui.github.io/SHIFT-ICU/ . All 86 existing checks pass. Historical ZIP and earlier Site are not used as current source.
 
 ## Teams / tasks
@@ -17,7 +22,7 @@ One existing CABG rhythm-change scenario becomes a small complete 3–5 minute t
 | Development / playtest | Root: designer and integration owner | Complete quick shift, clinical gates, render/focus wiring, preserved existing modes | Implemented; independent QA passed |
 | Development / playtest | Input specialist subagent | Standard gamepad + keyboard adapter and meaningful input tests; only `controller-input.js`, its test, own report | Implemented; independent QA passed |
 | Development / playtest | Independent QA subagent | Play through start/pause/finish/replay, focus and regressions; actual vs untested evidence | Complete; final-batch keyboard QA passed |
-| Coordination | Root | Resolve proposals, maintain this record, integrate, test, publish and report | Active |
+| Coordination | Root | Resolve proposals, maintain this record, integrate, test, publish and report | Complete for this build; awaiting Rafael’s playtest |
 
 ## Three highest-impact decisions
 1. **Small complete loop:** use existing `cabg-recovery`; one patient, one compact arena, one clear objective, at most three actions per panel. Keep old hospital as a separate mode.
@@ -28,7 +33,7 @@ Keep the current clinical profile, colors, nurse/world interaction, old saves an
 
 ## Blockers / unknowns
 - Rafael selected **computer + gamepad**; exact OS/browser/controller model not yet supplied. Real controller connectivity and comfort remain hands-on acceptance.
-- GitHub connector writes again returned403. Signed-in GitHub browser remains usable and previously authorized for upload/merge/Pages deployment.
+- Resolved publication limitation: GitHub connector writes returned403; the authorized signed-in GitHub browser saved the exact tested tree, merged it and ran Pages successfully.
 - No educator/local-protocol approval. This is a fictional teaching game with source-informed review, not a validated competency assessment.
 
 ## Test record
@@ -39,7 +44,7 @@ Keep the current clinical profile, colors, nurse/world interaction, old saves an
 - Clinical implementation review found no blocking unsafe claim. Physical controller, real human enjoyment and deployed asset checks remain separate.
 
 ## Next playable milestone
-**Implemented, not yet deployed v0.5:** controller-first “Rhythm on the night shift,” from existing CABG case. Root owns integration on `fun-shift-v0.5`; other agents owned disjoint files. Independent keyboard QA and clinical logic review passed; publishing is in progress. Human enjoyment and physical controller compatibility remain Rafael’s test, not inferred from automated checks.
+**Deployed playable candidate v0.5.0:** controller-first “Rhythm on the night shift,” from existing CABG case. Root owns integration on `fun-shift-v0.5`; other agents owned disjoint files. Independent keyboard QA and clinical logic review passed; deployed source and23 live assets verified. The next milestone is Rafael’s hardware/pacing feedback, before adding more systems. Human enjoyment and physical controller compatibility remain Rafael’s test, not inferred from automated checks.
 
 ## Final simplicity refinement
 Routine plan / call / cart / diagnostic-request / handoff-prep results now return
@@ -55,3 +60,10 @@ name, then start and navigate the shift without a mouse. Pause/resume once,
 finish, replay and try the other task order. Report the controller model, OS,
 browser, approximate time, and the first awkward/boring moment. Physical pad
 connection/disconnection and enjoyment cannot be certified by this cloud browser.
+
+## Live smoke test
+Root verified the public `/#quick` entry, focused Start, keyboard start/guided
+walking, baseline/change assessment, call feedback returning focus to CANVAS,
+pause/back and task choice. Deployment and asset verification are complete.
+No physical controller was connected in the cloud browser; no TV remote support
+is claimed. No job or agent continues after this completed handoff.
