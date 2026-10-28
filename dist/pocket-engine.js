@@ -26,6 +26,8 @@ export const POCKET_PARTS = Object.freeze([
   {id:'cable',name:'Cable + holder'},
   {id:'sterile-kit',name:'Sterile assist kit'}
 ]);
+export const POCKET_FIT = Object.freeze(['saline','wrap','tubing','cable']);
+export const POCKET_PRIME_PATH = Object.freeze(['bag','transducer','waste']);
 const ASSESS_IDS=POCKET_ASSESS.map(x=>x.id), PART_IDS=POCKET_PARTS.map(x=>x.id);
 const TRACE_IDS=['bag','pump','access'], LINE_CHECKS=['waveform','site','perfusion'];
 const PHASES=['assess','support','aline','aline-check','waiting','recheck','handoff','complete'];
@@ -42,7 +44,7 @@ export function createPocketRun({seed=Date.now(),pressure='calm'}={}){
       alineReason:'Cuff readings are inconsistent during ongoing support; the team orders an A-line here.'},
     assess:[],help:false,
     med:{order:false,label:false,line:[],pump:false,started:false},
-    aline:{parts:[],primed:false,bubbles:['a','b','c'],pressure:0,level:0,zero:false,teamInserted:false,checks:[]},
+    aline:{setupVersion:2,parts:[],fit:[],path:[],primed:false,primeStage:'vent',flow:0,capped:false,stopcock:'waste',bubbles:['a','b','c'],pressure:0,level:0,zero:false,teamInserted:false,checks:[]},
     recheck:{left:0,ready:false,done:false},
     variation:{parts:shuffle(PART_IDS,rng),labels:shuffle(['match','wrong-patient','wrong-concentration'],rng),traceBend:Math.floor(rng()*2)},
     feedback:'Pressure is low. Check the patient and bring in bedside help.',history:[]
@@ -66,9 +68,12 @@ function done(s,id,text,event=id){
 const reject=(s,text)=>reply(s,text,false,'retry',false);
 const repeat=(s,text)=>reply(s,text,true,'repeat',false);
 const assessed=s=>ASSESS_IDS.every(id=>s.assess.includes(id));
-const assembled=s=>PART_IDS.every(id=>s.aline.parts.includes(id));
+const assembled=s=>POCKET_FIT.every(id=>s.aline.fit.includes(id));
+const pathTraced=s=>POCKET_PRIME_PATH.every((id,i)=>s.aline.path[i]===id);
+const cleared=s=>s.aline.primed&&s.aline.primeStage==='done'&&!s.aline.bubbles.length;
+const prepReady=s=>assembled(s)&&pathTraced(s)&&cleared(s)&&s.aline.pressure===300&&levelled(s);
 const levelled=s=>Math.abs(s.aline.level-50)<=4;
-const monitoringReady=s=>s.aline.teamInserted&&s.aline.zero&&s.aline.primed&&!s.aline.bubbles.length&&s.aline.pressure===300&&levelled(s)&&LINE_CHECKS.every(id=>s.aline.checks.includes(id));
+const monitoringReady=s=>s.aline.teamInserted&&s.aline.zero&&s.aline.stopcock==='monitor'&&s.aline.capped&&prepReady(s)&&LINE_CHECKS.every(id=>s.aline.checks.includes(id));
 function supportFirst(s){return s.med.started?null:reject(s,'Start the needed prescribed support; do not wait for an A-line.');}
 
 export function pocketAction(s,action,value){
@@ -115,27 +120,65 @@ export function pocketAction(s,action,value){
     s.med.started=true;s.recheck.left=POCKET_RECHECK_SECONDS;s.recheck.ready=false;
     return done(s,'support','Ordered support started; watch patient, rhythm, BP and IV site. Prep the A-line.','support');
   }
-  if(action==='part'){
+  if(action==='fit'){
     const blocked=supportFirst(s);if(blocked)return blocked;
-    if(!PART_IDS.includes(value))return reject(s,'That component does not belong in this ordered setup.');
-    if(s.aline.parts.includes(value))return repeat(s,'That component is already in the setup.');
-    s.aline.parts.push(value);return done(s,'part:'+value,`${s.aline.parts.length}/6 components placed.`,'part');
+    if(!POCKET_FIT.includes(value))return reject(s,'These connectors do not fit. Follow the matching physical shapes.');
+    if(s.aline.fit.includes(value))return repeat(s,'That connection is already secure.');
+    const next=POCKET_FIT.find(id=>!s.aline.fit.includes(id));
+    if(value!==next)return reject(s,next==='saline'?'Slide the prepared saline bag into the open sleeve first.':next==='wrap'?'Close the sleeve around the bag before connecting the circuit.':next==='tubing'?'Seat the fluid connector before connecting the monitor cable.':'Seat the keyed monitor cable.');
+    s.aline.fit.push(value);
+    const parts={saline:['saline','pressure-bag'],wrap:[],tubing:['transducer','tubing'],cable:['cable','sterile-kit']}[value];
+    for(const id of parts)if(!s.aline.parts.includes(id))s.aline.parts.push(id);
+    const text={saline:'Prepared saline bag seated in the sleeve.',wrap:'Sleeve closed. Keep it unpressurized while de-airing.',tubing:'Compatible fluid connector seated. Circuit remains off the patient.',cable:'Keyed monitor cable seated. Sterile assist kit stays packaged for the trained team.'}[value];
+    return done(s,'fit:'+value,text,'fit');
+  }
+  if(action==='part'||action==='bubble')return reject(s,'Use the physical setup and fluid path. Air must move out with flow to waste.');
+  if(action==='prime-trace'){
+    const blocked=supportFirst(s);if(blocked)return blocked;
+    if(!assembled(s))return reject(s,'Fit the bag, sleeve, fluid connector and monitor cable first.');
+    if(s.aline.path.includes(value))return repeat(s,'That part of the fluid path is already traced.');
+    if(value!==POCKET_PRIME_PATH[s.aline.path.length])return reject(s,'Trace continuously: saline bag → transducer → waste. The patient stays disconnected.');
+    s.aline.path.push(value);
+    return done(s,'prime-trace:'+value,value==='waste'?'Path ends at waste, off the patient. Prime the transducer and vent first.':'Fluid path traced. Follow it toward waste.','prime-trace');
   }
   if(action==='prime'){
     const blocked=supportFirst(s);if(blocked)return blocked;
-    if(!assembled(s))return reject(s,'Place all six setup components first.');
-    if(s.aline.primed)return repeat(s,'Disconnected circuit already primed. Remove the visible air.');
-    s.aline.primed=true;return done(s,'prime','Prime off the patient. Clear all three air pockets.','prime');
+    if(!assembled(s)||!pathTraced(s))return reject(s,'Fit the setup and trace its disconnected fluid path to waste first.');
+    if(s.aline.primed)return repeat(s,'Priming is underway. Finish the vent, then the remaining tubing.');
+    if(s.aline.teamInserted||s.aline.stopcock!=='waste'||s.aline.pressure!==0)return reject(s,'Priming requires an unpressurized circuit off the patient.');
+    s.aline.primed=true;return done(s,'prime','Prime the transducer and vent to waste first; then the remaining tubing.','prime');
   }
-  if(action==='bubble'){
-    if(!s.aline.primed)return reject(s,'Prime the disconnected circuit before clearing its air pockets.');
-    if(!['a','b','c'].includes(value))return reject(s,'Choose a visible air pocket.');
-    if(!s.aline.bubbles.includes(value))return repeat(s,'That air pocket is already cleared.');
-    s.aline.bubbles=s.aline.bubbles.filter(id=>id!==value);
-    return done(s,'bubble:'+value,s.aline.bubbles.length?'Air pocket cleared. Check the rest.':'Air cleared. Pressurize this case’s bag.','bubble');
+  if(action==='flush'||action==='flush-tap'){
+    const blocked=supportFirst(s);if(blocked)return blocked;
+    if(s.paused)return reject(s,'Paused. Resume before moving fluid.');
+    if(!assembled(s)||!pathTraced(s)||!s.aline.primed)return reject(s,'Fit and trace the circuit, then start priming off the patient.');
+    if(s.aline.teamInserted||s.aline.stopcock!=='waste'||s.aline.pressure!==0)return reject(s,'This de-airing activity only runs unpressurized and off the patient.');
+    if(s.aline.primeStage==='done')return repeat(s,'Both paths are clear. Replace the vented caps before pressurizing.');
+    const elapsed=Number(value);
+    if(action==='flush'&&(value===null||value===''||!Number.isFinite(elapsed)||elapsed<=0))return reject(s,'Hold to move fluid; release to stop.');
+    const increment=action==='flush-tap'?34:Math.min(.25,elapsed)*50;
+    s.aline.flow=Math.min(100,s.aline.flow+increment);
+    if(s.aline.primeStage==='vent'&&s.aline.flow>=100){
+      s.aline.primeStage='tubing';s.aline.flow=0;
+      return done(s,'prime-vent','Transducer and vent are clear. Now prime the remaining tubing to waste.','prime-stage');
+    }
+    if(s.aline.primeStage==='tubing'){
+      const remaining=[34,67,100].filter(threshold=>s.aline.flow<threshold).length;
+      // Preserve which bubbles were already cleared in an older saved layout.
+      s.aline.bubbles=s.aline.bubbles.slice(Math.max(0,s.aline.bubbles.length-remaining));
+      if(s.aline.flow>=100){s.aline.primeStage='done';return done(s,'prime-tubing','Fluid has displaced the remaining air to waste. Replace the vented caps.','prime-stage');}
+    }
+    // Continuous flow is saved without filling the clinical history on every animation frame.
+    return reply(s,s.aline.primeStage==='vent'?'Fluid is displacing air through the transducer vent.':'Fluid is carrying the remaining air out to waste.',true,'flow',true);
+  }
+  if(action==='cap'){
+    if(!cleared(s))return reject(s,'Clear the transducer vent and the remaining tubing before replacing caps.');
+    if(s.aline.capped)return repeat(s,'Nonvented caps are already secure.');
+    if(s.aline.stopcock!=='waste'||s.aline.teamInserted)return reject(s,'Use the stopcock control to restore closed monitoring.');
+    s.aline.capped=true;return done(s,'cap','Vented caps replaced with nonvented caps. Now pressurize this prepared setup.','cap');
   }
   if(action==='pressure'){
-    if(!s.aline.primed||s.aline.bubbles.length)return reject(s,'Prime and clear all air from the disconnected circuit first.');
+    if(!assembled(s)||!pathTraced(s)||!cleared(s)||!s.aline.capped)return reject(s,'Prime both paths off the patient, clear all air and replace the vented caps first.');
     if(s.aline.pressure===300)return repeat(s,'This setup’s prescribed pressure target is met.');
     s.aline.pressure=Math.min(300,s.aline.pressure+100);
     return done(s,'pressure',s.aline.pressure===300?'300 mmHg: this setup’s target met. Align the reference level.':`${s.aline.pressure} mmHg · this setup’s target is 300.`,'pressure');
@@ -146,19 +189,29 @@ export function pocketAction(s,action,value){
     const next=Math.max(0,Math.min(100,n));if(next===s.aline.level)return repeat(s,levelled(s)?'Right-atrial reference aligned.':'Slide the transducer to the reference.');
     s.aline.level=next;return done(s,'level',levelled(s)?'Right-atrial reference aligned.':'Slide the transducer to the reference.','level');
   }
+  if(action==='stopcock'){
+    if(!['air','monitor'].includes(value))return reject(s,'Choose the labeled air-reference or closed-monitoring route.');
+    if(!prepReady(s))return reject(s,'Complete priming, cap replacement, pressure and leveling before the reference step.');
+    if(value===s.aline.stopcock)return repeat(s,value==='air'?'Patient port isolated; reference open to air.':'Closed monitoring restored; air port capped.');
+    if(value==='monitor'&&!s.aline.zero)return reject(s,'Zero with the patient port isolated and reference open to air first.');
+    s.aline.stopcock=value;s.aline.capped=value==='monitor';
+    if(value==='air')s.aline.zero=false;
+    return done(s,'stopcock:'+value,value==='air'?'Patient port isolated; reference open to air. Ready to zero.':'Air port closed and capped. Patient-to-transducer monitoring route restored.','stopcock');
+  }
   if(action==='zero'){
-    if(!s.aline.primed||s.aline.bubbles.length||s.aline.pressure!==300||!levelled(s))return reject(s,'Clear air, reach this case’s bag pressure, and level before zeroing.');
+    if(!prepReady(s)||s.aline.stopcock!=='air')return reject(s,'Clear both paths, pressurize, level, and isolate the patient port with the reference open to air before zeroing.');
     if(s.aline.zero)return repeat(s,'Zero checked; restore the prescribed closed monitoring state.');
-    s.aline.zero=true;return done(s,'zero','Zero checked. Restore closed monitoring state and assist the trained inserter.','zero');
+    s.aline.zero=true;return done(s,'zero','Zero checked. Restore the closed, capped monitoring route. Zeroing does not change perfusion.','zero');
   }
   if(action==='insert-team'){
-    if(!s.aline.zero||!levelled(s)||s.aline.pressure!==300||s.aline.bubbles.length)return reject(s,'Finish the safe setup before handing it to the trained inserter.');
+    if(!prepReady(s)||!s.aline.zero||s.aline.stopcock!=='monitor'||!s.aline.capped)return reject(s,'Complete the reference step and restore closed, capped monitoring before handing off to the trained inserter.');
     if(s.aline.teamInserted)return repeat(s,'The trained team has placed the line. Check tracing, site and distal perfusion.');
     s.aline.teamInserted=true;return done(s,'team-insertion','Trained team places the ordered A-line. Check waveform, site and distal perfusion.','waveform');
   }
   if(action==='line-check'){
     if(!s.aline.teamInserted)return reject(s,'The trained inserter places the line before post-insertion checks.');
     if(!LINE_CHECKS.includes(value))return reject(s,'Check the waveform, insertion site and distal perfusion.');
+    if(value==='waveform'&&(!prepReady(s)||!s.aline.zero||s.aline.stopcock!=='monitor'||!s.aline.capped))return reject(s,'Restore a leveled, zeroed and closed monitoring circuit before reviewing the arterial waveform.');
     if(s.aline.checks.includes(value))return repeat(s,'That post-insertion check is already recorded.');
     s.aline.checks.push(value);
     const text=value==='waveform'?'Waveform reviewed against the patient/cuff context. Setup itself did not raise MAP.':value==='site'?'Insertion site and securement checked; no new bleeding in this scripted scene.':'Distal circulation checked and remains present in this scripted scene.';
@@ -204,12 +257,16 @@ export function pocketObjective(s){
   if(!s.med.pump)return objective('Verify the pump','Match its locked setting to the active patient prescription.','pump','pump');
   if(!s.med.started)return objective('Start ordered support','The A-line does not have to be ready first.','pump','start-support');
   if(s.recheck.ready&&!s.recheck.done)return objective('Recheck your patient now','Return to the bedside. Your unfinished setup stays ready to resume.','patient','recheck');
-  if(!assembled(s))return objective('Build the A-line setup','Ongoing BP and IV-site monitoring continue while you prepare.','aline','part',s.aline.parts.length,6);
-  if(!s.aline.primed)return objective('Prime off the patient','Keep the training circuit disconnected for priming.','aline','prime');
-  if(s.aline.bubbles.length)return objective('Clear the air','Clear all three visible air pockets.','aline','bubble',3-s.aline.bubbles.length,3);
+  if(!assembled(s))return objective('Fit the A-line setup','Prepared bag → sleeve wrap → fluid connector → monitor cable.','aline','fit',s.aline.fit.length,4);
+  if(!pathTraced(s))return objective('Trace the fluid path','Saline bag → transducer → waste. Keep the patient disconnected.','aline','prime-trace',s.aline.path.length,3);
+  if(!s.aline.primed)return objective('Prime off the patient','De-air the transducer vent first, then the remaining tubing.','aline','prime');
+  if(s.aline.primeStage!=='done')return objective(s.aline.primeStage==='vent'?'Clear the transducer vent':'Clear the remaining tubing','Hold for flow to waste; release to stop. All air must leave before pressure.','aline','flush',s.aline.flow,100);
+  if(!s.aline.capped&&s.aline.stopcock==='waste')return objective('Replace vented caps','Secure the nonvented caps before pressurizing this kit.','aline','cap');
   if(s.aline.pressure<300)return objective('Pump the pressure bag','This ordered setup uses a 300 mmHg bag-pressure target.','aline','pressure',s.aline.pressure,300);
   if(!levelled(s))return objective('Align the reference','Move the transducer to the marked right-atrial reference.','aline','level');
-  if(!s.aline.zero)return objective('Zero and restore','Zero to atmosphere, then restore the prescribed closed state.','aline','zero');
+  if(!s.aline.zero&&s.aline.stopcock!=='air')return objective('Route the reference to air','Isolate the patient port; open the transducer reference to air.','aline','stopcock');
+  if(!s.aline.zero)return objective('Zero the reference','Patient port isolated. Reference open to air.','aline','zero');
+  if(s.aline.stopcock!=='monitor'||!s.aline.capped)return objective('Restore closed monitoring','Close and cap the air port; restore the patient-to-transducer route.','aline','restore');
   if(!s.aline.teamInserted)return objective('Assist the trained inserter','Your completed setup supports the operator; it is not an insertion credential.','aline','insert-team');
   if(!monitoringReady(s))return objective('Check the new line','Waveform, insertion site and distal perfusion.','aline','line-check',s.aline.checks.length,3);
   if(!s.recheck.done)return objective(s.recheck.ready?'Reassess the patient':'Keep monitoring',s.recheck.ready?'Obtain the follow-up; a waveform alone does not show recovery.':`Recheck in ${Math.ceil(s.recheck.left)} game seconds, or use the explicit time jump.`,'patient',s.recheck.ready?'recheck':'wait');
@@ -225,5 +282,23 @@ export function restorePocketRun(value){
   if(!value||value.version!==POCKET_VERSION||!PHASES.includes(value.phase)||!value.patient||!value.med||!value.aline||!value.recheck||!Array.isArray(value.history))return null;
   if(!Array.isArray(value.assess)||!Array.isArray(value.med.line)||!Array.isArray(value.aline.parts)||!Array.isArray(value.aline.bubbles)||!Array.isArray(value.aline.checks))return null;
   if(!Number.isFinite(value.secondsPlayed)||!Number.isFinite(value.recheck.left)||!Number.isFinite(value.patient.MAP))return null;
+  const a=value.aline;
+  if(a.setupVersion===undefined){
+    // v0.6 saves keep every accepted task; only the newly visible closure may remain.
+    const downstream=a.primed||a.pressure>0||a.zero||a.teamInserted;
+    a.fit=downstream?[...POCKET_FIT]:[
+      ...(a.parts.includes('saline')&&a.parts.includes('pressure-bag')?['saline','wrap']:[]),
+      ...(a.parts.includes('tubing')&&a.parts.includes('transducer')?['tubing']:[]),
+      ...(a.parts.includes('cable')?['cable']:[])
+    ];
+    a.path=downstream?[...POCKET_PRIME_PATH]:[];
+    a.primeStage=a.primed?(a.bubbles.length?'tubing':'done'):'vent';
+    a.flow=a.primed?(a.bubbles.length?Math.min(99,(3-a.bubbles.length)*34):100):0;
+    a.stopcock=a.teamInserted?'monitor':a.zero?'air':'waste';
+    a.capped=a.teamInserted||(!a.zero&&a.pressure>0);
+    a.setupVersion=2;
+  }
+  if(a.setupVersion!==2||!Array.isArray(a.fit)||!Array.isArray(a.path)||!Number.isFinite(a.flow)||a.flow<0||a.flow>100||!['vent','tubing','done'].includes(a.primeStage)||!['waste','air','monitor'].includes(a.stopcock)||typeof a.capped!=='boolean')return null;
+  if(a.fit.some(id=>!POCKET_FIT.includes(id))||new Set(a.fit).size!==a.fit.length||a.path.some((id,i)=>id!==POCKET_PRIME_PATH[i]))return null;
   return value;
 }
