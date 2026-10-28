@@ -71,9 +71,10 @@ Keep it separate from `rgallardomc-ui/Entropy-Game`, which is a visual reference
 
 ## Short-shift milestone / team integration
 
-- The primary entry is the bounded `cabg-recovery` quick shift. Make its core loop
-  understandable and enjoyable before adding cases or systems. Keep the existing
-  hospital and focused modes available, with their notes and saves intact.
+- The user superseded the CABG/controller-first prototype on October28: primary
+  entry is the phone-first Pocket Bedside episode. Prioritize touch movement, one
+  portrait viewport and tactile interventions. Keep old hospital/quick modes and
+  their saves available separately; do not apply the rejected default to phones.
 - Pure quick state / navigation geometry live in `quick-engine.js`; rendering in
   `quick-shift.js` / `.css`; standard gamepad / keyboard focus in `controller-input.js`.
   New progress uses `shift-icu-quick-v1`, independently of old save formats.
@@ -88,3 +89,21 @@ Keep it separate from `rgallardomc-ui/Entropy-Game`, which is a visual reference
   not a resolved rhythm. Reassessment and pending-plan handoff gate completion.
 - Do not pad playtime or add speed grades to meet the 3–5 minute target. Human fun,
   timing and Rafael’s actual controller acceptance require hands-on feedback.
+
+## Phone-first pocket bedside / v0.6
+
+- `pocket-engine.js` owns episode state; `pocket-game.js`/`.css` own the phone UI;
+  `pocket-touch.js` owns floating drag movement and `pocket-world.js` compact routes.
+  The separate save key is `shift-icu-pocket-v1`; preserve all earlier keys.
+- Keep the whole play loop inside a portrait viewport. Mini-games replace the
+  workspace; do not stack more page below or add D-pad/typing as primary controls.
+  Support pointer capture, release/cancel/blur, safe areas and44px targets.
+- Patient-first assessment includes airway/breathing, mental state, perfusion and
+  pressure validation. Help is ungated. Verify the explicit norepinephrine Rx,
+  premix, systemic IV, site and locked pump; no unprescribed titration game.
+- Needed support never waits for A-line prep. Due recheck takes objective priority
+  over equipment; preserve in-progress setup. Zeroing changes monitoring, not MAP.
+- The trained team inserts. Postline waveform/site/distal checks and obtained
+  reassessment precede completion. Preserve historical urine and pending care.
+- Home-screen/PWA cache scope must remain within this repository; never delete
+  another project’s cache. Keep local phone-check.html fixture ignored/unpublished.

@@ -152,3 +152,22 @@ duration, treatment response or patient outcome. No points or speed grade replac
 clinical gates. See [the implementation review](docs/team/clinical-review.md) for
 exact evidence, scope and primary links: AHA 2025 Adult ALS / tachyarrhythmia
 algorithm and 2023 ACC/AHA/ACCP/HRS AF guideline sections 4.2.2 / 10.9.2.
+
+## October28,2026 — phone-first hemodynamic support
+
+The revised Pocket Bedside case is an older fictional patient with suspected
+septic shock and explicit existing orders. An independent source/implementation
+review checked SCCM2026, the current DailyMed norepinephrine premix label and
+Edwards TruWave pressure-kit IFU DOC-0070773A Englishpp1–2. See
+[the evidence and exact source links](docs/team/pocket-clinical.md).
+
+Clinical gates preserve airway/breathing, mental state, perfusion and pressure
+checks; ungated help; patient/allergy/Rx/premix/systemic-IV/pump verification;
+needed support before A-line preparation; due reassessment priority; and no
+perfusion benefit from zeroing. The individualized MAP target65 is this case’s
+order, not a universal older-adult target. Trained insertion and postline
+waveform/site/distal-perfusion checks remain explicit. The obtained scripted
+recheck exposes MAP66 without inventing normal urine or cured shock.
+
+This is source-informed design review and a simulation, not clinical validation,
+local protocol approval or procedural competence.

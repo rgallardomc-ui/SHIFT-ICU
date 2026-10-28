@@ -167,3 +167,16 @@ Only root integrates. The investigator independently playtests, a source-informe
 clinical agent reviews claims, and a separate gameplay researcher distinguishes
 source facts from adaptation choices. See `docs/PROJECT_RECORD.md`. Hardware
 compatibility and enjoyment are not inferred from Node checks.
+
+## v0.6 phone-first pocket bedside
+
+The old controller-first entry is superseded. The phone shell fits100dvh with
+safe areas and one replaceable workspace. Native Pointer Events support a
+floating drag origin/release-stop world joystick, bag/part drag/drop, IV-line
+checkpoint tracing, bubbles, pressure pumping and transducer reference dragging.
+Tap alternatives preserve accessibility without requiring a D-pad.
+
+Episode logic is pure/serializable and independent of old saves. Timed recheck
+interrupts equipment guidance without losing setup progress. The app shell uses
+a manifest and repository-scoped network-first offline cache; it never
+intercepts or deletes Entropy or another project’s resources.
