@@ -171,3 +171,14 @@ recheck exposes MAP66 without inventing normal urine or cured shock.
 
 This is source-informed design review and a simulation, not clinical validation,
 local protocol approval or procedural competence.
+
+## October 28, 2026 — physical A-line milestone
+
+The physical puzzle was source-reviewed against the selected TruWave IFU, including
+its off-patient preparation order, rather than generalized arterial-line folklore.
+A real clinical-review subagent re-opened the primary sources and inspected the
+English IFU pages. The intended engine/UI sequence was then inspected; identified
+monitor gating, recheck navigation and waste-route depiction issues were corrected.
+The evidence, scope limits, interface requirements and implementation findings are in
+[physical-aline-clinical.md](docs/team/physical-aline-clinical.md).
+This record does not grant local protocol approval or procedural competence.

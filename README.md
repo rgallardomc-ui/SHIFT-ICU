@@ -21,15 +21,16 @@ GitHub is the source of truth. Retrieve current `main` and preserve the pending
 branch work before future edits. Pages deployments are manual; a source commit
 alone does not update the playable game.
 
-## Pocket Bedside — 0.6 candidate
+## Pocket Bedside — 0.7 physical setup
 
 - One portrait viewport: patient, pump and tray stay close. Drag to move; release
   to stop, or tap a station. No D-pad or required typing.
 - Touch patient assessment hotspots, match the prescribed bag, trace the systemic
   IV, then assemble/prime/de-air/pressurize/level/zero the ordered monitoring setup.
+- Physical bag/sleeve and connector fitting, vent-first then tubing flow to waste, caps, three bulb squeezes, a draggable transducer and labeled stopcock replace the six word docks. Tap alternatives accompany precision gestures. A miniature monitor zooms to a schematic peak interaction only after valid setup.
 - A trained inserter places the catheter. Nurse checks waveform/site/distal
   circulation and obtains the patient response. A-line setup does not treat shock.
-- Physical pieces rearrange on replay; the medical order does not randomize.
+- Replay preserves the clinical plan; premix placement and IV trace layout vary. Expanded equipment-layout variation is planned after phone feedback.
 - Installable home-screen manifest/app shell. In Safari, use Share → Add to Home
   Screen; real-device installation/offline behavior remains separately testable.
 
@@ -140,7 +141,7 @@ No installation or build step is required. Use Node.js 22 or newer for tests:
 npm test
 ```
 
-The release has **134 passing automated checks**, including the prior focused
+The release has **142 passing automated checks**, including the prior focused
 cases, all floor response / handoff paths, specialty boundaries, randomized room
 assignments, admissions, supplies / procedure gates, recurring deadlines, specimen
 chronology, TOF readiness, persistence and walkable routes.
